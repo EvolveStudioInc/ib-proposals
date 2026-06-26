@@ -44,8 +44,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--off);color:var(--text);mi
 .saved-item:hover{background:rgba(255,255,255,.08)}
 .si-name{font-size:10px;color:var(--lt);flex:1;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .si-date{font-size:9px;color:rgba(255,255,255,.18);flex-shrink:0}
-.si-del{font-size:9px;color:rgba(255,255,255,.12);cursor:pointer;flex-shrink:0}
-.si-del:hover{color:var(--err)}
+.si-del{font-size:10px;color:rgba(255,255,255,.0);cursor:pointer;flex-shrink:0;padding:2px 4px;border-radius:3px;transition:all .15s}
+.saved-item:hover .si-del{color:rgba(255,255,255,.4)}
+.si-del:hover{color:var(--err)!important;background:rgba(255,255,255,.07)}
 .no-saved{font-size:10px;color:rgba(255,255,255,.15);font-style:italic}
 .main{flex:1;display:flex;flex-direction:column;min-width:0}
 .topbar{background:var(--white);border-bottom:1px solid var(--bdr);padding:.75rem 1.4rem;display:flex;align-items:center;justify-content:space-between;gap:1rem}
@@ -603,6 +604,9 @@ function captureCurrentFields(){
     }
   });
   // Also snapshot S.addons and S.shoots for SMM
+  // Capture signing director explicitly since it's a hidden input
+  const sdEl=document.getElementById('signingDir');
+  if(sdEl)_sessionFields['signingDir']=sdEl.value;
   _sessionFields['__addons']=[...S.addons];
   _sessionFields['__shoots']=S.shoots;
   _sessionFields['__dur']=S.dur;
@@ -649,6 +653,9 @@ function restoreCurrentFields(){
   }
   // Restore retainer duration buttons if on TL step
   if(S.type==='retainer'&&document.getElementById('rdur-12'))selRetDur(S.retDur||12);
+  // Sync smm-months field with S.dur
+  const smmMoEl=document.getElementById('smm-months');
+  if(smmMoEl)smmMoEl.value=S.dur||12;
 }
 
 function validateStep(from){
@@ -685,7 +692,7 @@ function go(n){
   if(n>S.step&&!validateStep(S.step))return;
   if(n===5){captureCurrentFields();buildDels();restoreCurrentFields();}
   else if(n===6){captureCurrentFields();buildTL();restoreCurrentFields();}
-  else if(n===8)buildFee();
+  else if(n===8){captureCurrentFields();buildFee();}
   else if(n===9)buildReview();
   document.querySelectorAll('.sp').forEach(p=>p.classList.remove('active'));
   document.getElementById('step-'+n).classList.add('active');
@@ -1367,8 +1374,8 @@ function getItems(){
 
   if(sv.has('branding')){
     const pkg=g('brand-pkg')||'logo';
-    const base=pkg==='full'?R.brand.full:R.brand.logo;
-    const pkgLbl=pkg==='full'?'Full Brand Identity Package':'Logo Design';
+    const base=pkg==='full'?R.brand.full:pkg==='collateral'?0:R.brand.logo;
+    const pkgLbl=pkg==='full'?'Full Brand Identity Package':pkg==='collateral'?'Collateral Design':'Logo Design';
     const addonTotal=Object.values(brandAddons).reduce((a,b)=>a+b.rate,0);
     const addonNames=Object.values(brandAddons).map(a=>a.name);
     const totalRate=base+addonTotal;
@@ -2258,12 +2265,12 @@ function buildPayload(){
   const rushAmt2=subAfterDisc2*rushPct3;
   const subFinal2=subAfterDisc2+rushAmt2;
   const vat=subFinal2*VAT,tot=subFinal2+vat,dep=tot*payPct,bal=tot-dep;
-  const payStrVal2=g('payStr')||'50';
-  const depLbl=payStrVal2==='100'?'Full Payment (100%)':payStrVal2==='25_25_50'?'25% Initial Deposit':payStrVal2==='30'?'30% Mobilization Deposit':'50% Mobilization Deposit';
+  const payStrVal2=S.payStr||g('payStr')||'50';
+  const depLbl=payStrVal2==='100'?'Full Payment (100%)':payStrVal2==='25_25_50'?'25% / 25% / 50% Instalment Plan':payStrVal2==='30'?'30% Mobilization Deposit':'50% Mobilization Deposit';
   const fmtAmt=n=>'BBD $'+n.toLocaleString('en',{minimumFractionDigits:2});
 
   // SVC name lookup
-  const svcName={photography:'Photography',videography:'Videography',drone:'Drone Photography & Videography',rawfootage:'Raw Footage Add-on',radio:'Radio Ad Production',script:'Script Development & Copywriting',press:'Press Release Copies',graphic:'Graphic Design',motion:'Motion Design',branding:'Brand Identity / Logo Design',brandstrat:'Brand Strategy',print:'Print Facilitation',smm:'Social Media Management',campaign:'Campaign Strategy & Execution',digital:'Digital Campaign Development',influencer:'Influencer Management',casting:'Casting & Model Management',eventmgmt:'Event Planning & Management',eventmedia:'Event Media Coverage',activation:'Activation',webdesign:'Web Design',webdev:'Web Development'};
+  const svcName={photography:'Photography',videography:'Videography',drone:'Drone Photography & Videography',rawfootage:'Raw Footage Add-on',radio:'Radio Ad Production',script:'Script Development & Copywriting',press:'Press Release Copies',graphic:'Graphic Design',motion:'Motion Design',branding:'Branding & Creative Identity',brandstrat:'Brand Strategy',print:'Print Facilitation',smm:'Social Media Management',campaign:'Campaign Strategy & Execution',digital:'Digital Campaign Development',influencer:'Influencer Management',casting:'Casting & Model Management',eventmgmt:'Event Planning & Management',eventmedia:'Event Media Coverage',activation:'Activation',webdesign:'Web Design',webdev:'Web Development'};
 
   // ── TABLE DATA ──
   // Sent as both flat text blocks (for current template) AND
@@ -2331,12 +2338,12 @@ function buildPayload(){
     postEnd:     isProject?fmtDate(g('postEnd')):'N/A',
     retainerStart:    !isProject?fmtDate(g('retStart')):'',
     retainerDuration: !isProject?String(S.retDur)+' months':'',
-    tlNotes:     g('tlNotes')||' ',
+    tlNotes:     g('tlNotes')||'',
 
     // Agreement
     agreeStart:  fmtDate(g('agreeStart')),
     agreeEnd:    fmtDate(g('agreeEnd')),
-    agreeNotes:  g('agreeNotes')||' ',
+    agreeNotes:  g('agreeNotes')||'',
 
     // Totals — single value replacements
     subtotal:      fmtAmt(subFinal2),
@@ -2354,8 +2361,11 @@ function buildPayload(){
     signingDirector: g('signingDir')==='alex'?'Alexander Miller':'Kyle Bennett-Walcott',
     signingTitle:    g('signingDir')==='alex'?'Director of Operations & Strategy':'Managing Director',
 
-    // Discount
-    discountPct: String(S.discount||0),
+    // Discount & Rush
+    discountPct:  String(S.discount||0),
+    rushPct:      String(S.rush||0),
+    rushAmount:   fmtAmt(rushAmt2),
+    discountAmount: fmtAmt(discAmt2),
 
     // Proposal type
     proposalType: S.type,
@@ -2403,18 +2413,39 @@ async function submitToMake(){
   const payload=buildPayload();
 
   try{
-    await fetch(WEBHOOK_URL,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(payload),
-      mode:'no-cors'
-    });
+    // Try with response first — works if Make.com has Webhook Response module configured
+    // Falls back gracefully if not
+    let docUrl=null;
+    try{
+      const resp=await fetch(WEBHOOK_URL,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(payload)
+      });
+      if(resp.ok){
+        const json=await resp.json();
+        if(json.docUrl)docUrl=json.docUrl;
+        if(json.docId)docUrl='https://docs.google.com/document/d/'+json.docId+'/edit';
+      }
+    } catch(corsErr){
+      // CORS blocked — fall back to no-cors (no response body available)
+      await fetch(WEBHOOK_URL,{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(payload),
+        mode:'no-cors'
+      });
+    }
 
     // Success state
     status.style.background='#f0faf5';
     status.style.border='1px solid #b2dfce';
     status.style.color='#1a6b44';
-    status.innerHTML='<strong>Proposal sent!</strong><br>Check <strong>/Proposals/2026/</strong> in Google Drive in about 30 seconds.<br>You will receive an email notification with the document link.';
+    if(docUrl){
+      status.innerHTML='<strong>Proposal generated!</strong><br><a href="'+docUrl+'" target="_blank" style="color:#1a6b44;font-weight:600;text-decoration:underline">Open Google Doc →</a><br><span style="font-size:10px;opacity:.7">Right-click to copy link</span>';
+    } else {
+      status.innerHTML='<strong>Proposal sent!</strong><br>Check <strong>/Proposals/2026/</strong> in Google Drive in about 30 seconds.';
+    }
 
     // Reset button to allow re-sending
     btn.disabled=false;
@@ -2425,14 +2456,13 @@ async function submitToMake(){
     saveDraft();
 
   } catch(err){
-    // On error, fully reset button
     btn.disabled=false;
     btn.textContent='⚡ Generate Google Doc →';
     btn.style.background='var(--navy)';
     status.style.background='#fdf0f0';
     status.style.border='1px solid rgba(231,76,60,0.3)';
     status.style.color='#c0392b';
-    status.innerHTML='<strong>⚠️ Could not reach Make.com.</strong><br>Check your internet connection and try again. Use Export PDF as a fallback.';
+    status.innerHTML='<strong>Could not reach Make.com.</strong><br>Check your internet connection and try again.';
     console.error('Webhook error:',err);
   }
 }
