@@ -2162,7 +2162,7 @@ async function loadCloudDrafts(){
     const resp=await fetch(url);
     const text=await resp.text();
     // Strip Google's callback wrapper: google.visualization.Query.setResponse({...});
-    const jsonStr=text.replace(/^[^\(]+\(/,'').replace(/\);\s*$/,'');
+    const jsonStr=text.replace(/^[^(]+\(/,'').replace(/\);\s*$/,'');
     const json=JSON.parse(jsonStr);
     const rows=(json.table&&json.table.rows)||[];
     cloudDrafts=rows.map(function(row){
