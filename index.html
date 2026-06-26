@@ -2149,30 +2149,33 @@ async function loadCloudDrafts(){
   if(cloudDraftsLoading)return;
   cloudDraftsLoading=true;
   list.innerHTML='<div class="no-saved" style="color:var(--mut)">Loading shared drafts...</div>';
-
   try{
-    const resp=await fetch(DRAFT_CSV_URL+'&t='+Date.now()); // cache bust
-    const csv=await resp.text();
-    const rows=csv.trim().split('\n').slice(1); // skip header row
-    cloudDrafts=rows.filter(function(r){return r.trim();}).map(function(row){
-      // Parse CSV row — fullData is last column and may contain commas so we split carefully
-      const cols=row.split(',');
-      const draftId=cols[0]?cols[0].replace(/^"|"$/g,''):'';
-      const clientName=cols[1]?cols[1].replace(/^"|"$/g,''):'';
-      const projectName=cols[2]?cols[2].replace(/^"|"$/g,''):'';
-      const proposalType=cols[3]?cols[3].replace(/^"|"$/g,''):'';
-      const savedAt=cols[4]?cols[4].replace(/^"|"$/g,''):'';
-      const updatedAt=cols[5]?cols[5].replace(/^"|"$/g,''):'';
-      // fullData is everything from col 6 onwards rejoined (handles commas in JSON)
-      const fullDataRaw=cols.slice(6).join(',').replace(/^"|"$/g,'').replace(/""/g,'"');
+    // Use Google Sheets JSON API — far more reliable than CSV for complex cell values
+    const url='https://docs.google.com/spreadsheets/d/'+DRAFT_SHEET_ID+'/gviz/tq?tqx=out:json&sheet=Drafts&t='+Date.now();
+    const resp=await fetch(url);
+    const text=await resp.text();
+    // Strip Google's callback wrapper: google.visualization.Query.setResponse({...});
+    const jsonStr=text.replace(/^[^\(]+\(/,'').replace(/\);\s*$/,'');
+    const json=JSON.parse(jsonStr);
+    const rows=(json.table&&json.table.rows)||[];
+    cloudDrafts=rows.map(function(row){
+      const c=row.c||[];
+      const val=function(i){return(c[i]&&c[i].v!=null)?String(c[i].v):'';};
+      const draftId=val(0);
+      const clientName=val(1);
+      const projectName=val(2);
+      const proposalType=val(3);
+      const savedAt=val(4);
+      const updatedAt=val(5);
+      const fullDataRaw=val(6);
       let fullData=null;
-      try{
-        // Try base64 decode first (new format), fall back to direct JSON parse (old format)
+      if(fullDataRaw){
+        // Try base64 decode first, fall back to direct JSON
         try{fullData=JSON.parse(decodeURIComponent(escape(atob(fullDataRaw))));}
-        catch(e2){fullData=JSON.parse(fullDataRaw);}
-      }catch(e){}
+        catch(e1){try{fullData=JSON.parse(fullDataRaw);}catch(e2){}}
+      }
       return {draftId,clientName,projectName,proposalType,savedAt,updatedAt,fullData};
-    }).filter(function(d){return d.draftId;});
+    }).filter(function(d){return d.draftId&&d.draftId!=='draftId';});
 
     if(!cloudDrafts.length){
       list.innerHTML='<div class="no-saved">No shared drafts yet</div>';
@@ -2180,9 +2183,10 @@ async function loadCloudDrafts(){
       list.innerHTML=cloudDrafts.map(function(d){
         const nm=d.clientName||d.projectName||'Untitled';
         const dt=d.updatedAt||d.savedAt||'';
-        return '<div class="saved-item" onclick="loadCloudDraft(\'' + d.draftId + '\')">'+
+        const hasData=!!d.fullData;
+        return '<div class="saved-item" onclick="loadCloudDraft(\'' + d.draftId + '\')" style="'+(hasData?'':'opacity:.5')+'" title="'+(hasData?'':'Re-save to restore data')+'">'+
           '<div class="si-name">'+nm+'</div>'+
-          '<div class="si-date">'+dt+'</div>'+
+          '<div class="si-date">'+dt+(hasData?'':' ⚠')+' <span style="font-size:8px;opacity:.5">shared</span></div>'+
           '<div class="si-del" onclick="delDraft(\'' + d.draftId + '\',event)">✕</div>'+
         '</div>';
       }).join('');
