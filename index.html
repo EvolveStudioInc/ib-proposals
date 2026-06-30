@@ -410,18 +410,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--off);color:var(--text);mi
 <script>
 // ═══ RATES & CONSTANTS ═══════════════════════════════
 const PRICING_URL='https://script.google.com/macros/s/AKfycbzurIEL8FXXdTOvNw2VcFED5dxIppxx7GH4o-urB3sQAqnQbVLjAM9wMsUhqQ-jdGXa/exec';
-  function getLoggedInEmail(){
-  const cookies=document.cookie.split(';');
-  for(const cookie of cookies){
-    const [name,val]=(cookie.trim()).split('=');
-    if(name==='CF_Authorization'&&val){
-      try{
-        const payload=JSON.parse(atob(val.split('.')[1]));
-        return payload.email||'';
-      }catch(e){return '';}
-    }
-  }
-  return '';
+function getLoggedInEmail(){
+  return window.CF_USER_EMAIL||'';
 }
 const DRAFT_SAVE_URL='https://hook.us2.make.com/2sn3503d6bhy301r3qwfqt2xfu73ynoh';
 const DRAFT_DELETE_URL='https://hook.us2.make.com/dpurx7w1qtw62i9jmk5e6saqnht08ggl';
@@ -2378,7 +2368,7 @@ function buildPayload(){
 
     // Proposal type
     proposalType: S.type,
-    userEmail:    getLoggedInEmail(),  // ← add this line
+    userEmail:    getLoggedInEmail(),
     // ── Table flat text (current — single-value template replacement) ──
     // Each row is tab-separated columns, rows separated by newlines
     servicesRows,
