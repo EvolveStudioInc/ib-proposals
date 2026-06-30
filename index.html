@@ -410,6 +410,19 @@ body{font-family:'DM Sans',sans-serif;background:var(--off);color:var(--text);mi
 <script>
 // ═══ RATES & CONSTANTS ═══════════════════════════════
 const PRICING_URL='https://script.google.com/macros/s/AKfycbzurIEL8FXXdTOvNw2VcFED5dxIppxx7GH4o-urB3sQAqnQbVLjAM9wMsUhqQ-jdGXa/exec';
+  function getLoggedInEmail(){
+  const cookies=document.cookie.split(';');
+  for(const cookie of cookies){
+    const [name,val]=(cookie.trim()).split('=');
+    if(name==='CF_Authorization'&&val){
+      try{
+        const payload=JSON.parse(atob(val.split('.')[1]));
+        return payload.email||'';
+      }catch(e){return '';}
+    }
+  }
+  return '';
+}
 const DRAFT_SAVE_URL='https://hook.us2.make.com/2sn3503d6bhy301r3qwfqt2xfu73ynoh';
 const DRAFT_DELETE_URL='https://hook.us2.make.com/dpurx7w1qtw62i9jmk5e6saqnht08ggl';
 const DRAFT_CSV_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vS9H_UgeXLlFo59LaxJaXJZRDuYgDmOimuQidYs_mKZwPWgOjd1lzIYPAMxKi9ZuBpJu-29PLZvWYV8/pub?gid=0&single=true&output=csv';
@@ -2365,7 +2378,7 @@ function buildPayload(){
 
     // Proposal type
     proposalType: S.type,
-
+    userEmail:    getLoggedInEmail(),  // ← add this line
     // ── Table flat text (current — single-value template replacement) ──
     // Each row is tab-separated columns, rows separated by newlines
     servicesRows,
