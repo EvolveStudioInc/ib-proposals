@@ -323,6 +323,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--off);color:var(--text);mi
         <div class="fgroup full"><label class="fl">Address</label><input class="fi" id="addr1" placeholder="Address Line 1" style="margin-bottom:5px"/><input class="fi" id="addr2" placeholder="City, Parish"/></div>
         <div class="fgroup"><label class="fl">Proposal Date <span class="r">*</span></label><input class="fi" id="proposalDate" type="date"/></div>
       </div>
+      <div id="brands-section" style="display:none;margin-top:12px">
+        <div class="slbl" style="margin-bottom:6px">Brands / Accounts <span style="font-weight:400;font-size:10px;color:var(--mut)">(retainer only — each brand can have its own package)</span></div>
+        <div id="brands-list"></div>
+        <button class="add-vid" onclick="addBrand()" style="margin-top:6px">+ Add another brand</button>
+        <div class="fn" style="margin-top:6px">Per-brand pricing is internal only. The client sees a single combined total.</div>
+      </div>
       <div class="fnav"><button class="btn bg" onclick="go(1)">← Back</button><button class="btn bp" onclick="go(3)">Next: Overview →</button></div>
     </div>
 
@@ -434,7 +440,18 @@ let R={
   gfx:{print:500,digital:300,banner:300,brochure:100,casecard:500,gondola:650,tshirt:400},
   brand:{logo:1500,full:3500},
   drone:350,radio:2000,raw:600,digital:2500,activation:3500,
-  smm:3500,linkedin:500,tiktok:1000,mailchimp:1000,community:500
+  smm:3500,linkedin:500,tiktok:1000,mailchimp:1000,community:500,
+  smmTiers:{
+    essentials:{name:'Essentials',price:2200,posts:12,desc:'1 Instagram · 12 posts/mo · Lo-fi capture · Meta Ads'},
+    essentialsPlus:{name:'Essentials Plus',price:2500,posts:14,desc:'Meta pages · 14 posts/mo · Lo-fi capture · Meta Ads'},
+    elite:{name:'Elite',price:3500,posts:12,desc:'Meta pages · 12 posts/mo · Monthly report · 4hrs lo-fi/mo · 1 major shoot/yr · Meta Ads'}
+  },
+  contentTiers:{
+    tier1:{name:'Tier 1 — Lite',    shootsPerYear:2,lofiHrs:2,total:1267},
+    tier2:{name:'Tier 2 — Standard',shootsPerYear:4,lofiHrs:4,total:2533},
+    tier3:{name:'Tier 3 — Pro',     shootsPerYear:6,lofiHrs:6,total:3700}
+  },
+  shootValue:6500,lockInDisc:0.20,lofiBundleRate:200,lofiBundleHrs:4,lofiOverageRate:150
 };
 
 async function loadPricing(){
@@ -518,7 +535,7 @@ const DESCS={
 };
 
 // ═══ STATE ═══════════════════════════════════════════
-const S={type:null,step:1,maxStep:1,total:9,svcs:new Set(),videos:[],addons:new Set(),shoots:0,dur:12,retDur:12,draftKey:null,discount:0,rush:0,showDiscount:false,showRush:false,payStr:'50'};
+const S={type:null,step:1,maxStep:1,total:9,svcs:new Set(),videos:[],addons:new Set(),shoots:0,dur:12,retDur:12,draftKey:null,discount:0,rush:0,showDiscount:false,showRush:false,payStr:'50',smmTier:'elite',chassis:'smm',contentTier:'tier2',contentShoots:4,contentLofi:4,brands:[{id:1,name:'',chassis:'smm',smmTier:'elite',contentTier:'tier2',addons:[]}]};
 const manFees={};
 
 const STEPS=[
@@ -585,6 +602,7 @@ function selType(t){
   document.getElementById('sSub').textContent=t==='project'?'Project Agreement':'Retainer Agreement';
   S.svcs.clear();S.videos=[];
   buildSvcs();
+  showBrandsIfRetainer();
 }
 
 // ═══ NAVIGATION ═══════════════════════════════════
@@ -693,7 +711,8 @@ function showStepErr(msg){
 function go(n){
   // Validate when moving forward
   if(n>S.step&&!validateStep(S.step))return;
-  if(n===5){captureCurrentFields();buildDels();restoreCurrentFields();}
+  if(n===2)setTimeout(function(){showBrandsIfRetainer();},50);
+  else if(n===5){captureCurrentFields();buildDels();restoreCurrentFields();}
   else if(n===6){captureCurrentFields();buildTL();restoreCurrentFields();}
   else if(n===8){captureCurrentFields();buildFee();}
   else if(n===9)buildReview();
@@ -1076,43 +1095,217 @@ function printPanel(){return W('print','Print Facilitation',`
   <div class="fn">Supplier cost + 15% facilitation markup = total billed to client.</div>`);}
 function cPrint(){const s=pf('print-cost');upChip('print-price',s+(s*0.15));}
 
-function smmPanel(){return W('smm','Social Media Management — Retainer',`
-  <div class="smm-base">
-    <div class="smm-bt">Base SMM Package</div>
-    <div class="smm-bp">BBD $3,500 / month</div>
-    <div class="smm-bi">Content Scheduling · Mixed Media Content · Meta Ads · 12 Posts/Month · Weekly Stories · Content Calendar · Initial Shoot · End of Month Report</div>
-  </div>
-  <div class="slbl" style="margin-bottom:6px">Platform Add-ons</div>
-  <div class="agrid">
-    <div class="ac" id="ac-linkedin" onclick="togAddon('linkedin')"><div class="ac-h"><div class="ac-name">LinkedIn</div><div class="ac-tag">+$500/mo</div></div><div class="ac-desc">4 posts per month</div></div>
-    <div class="ac" id="ac-tiktok" onclick="togAddon('tiktok')"><div class="ac-h"><div class="ac-name">TikTok</div><div class="ac-tag">+$1,000/mo</div></div><div class="ac-desc">4 posts per month</div></div>
-    <div class="ac" id="ac-mailchimp" onclick="togAddon('mailchimp')"><div class="ac-h"><div class="ac-name">Email Management</div><div class="ac-tag">+$1,000/mo</div></div><div class="ac-desc">Up to 4 blasts/month</div></div>
-    <div class="ac" id="ac-community" onclick="togAddon('community')"><div class="ac-h"><div class="ac-name">Community Management</div><div class="ac-tag">+$500/mo</div></div><div class="ac-desc">Active engagement & DMs</div></div>
-  </div>
-  <div class="slbl" style="margin-bottom:6px">Annual Shoot Add-ons</div>
-  <div class="shoot-bld">
-    <div class="shoot-bld-title">Extra Shoots/Year <span style="font-weight:400;color:var(--mut)">(4hr shoot · 30 images · 4 reels @ $500ea)</span></div>
-    <div class="dbtns" style="margin-bottom:6px">
-      <div class="dbtn on" id="sb-0" onclick="selShoots(0)">No extra</div>
-      <div class="dbtn" id="sb-1" onclick="selShoots(1)">+1 shoot/yr</div>
-      <div class="dbtn" id="sb-2" onclick="selShoots(2)">+2 shoots/yr</div>
-    </div>
-    <div id="shoot-prev" style="font-size:9.5px;color:var(--mut)">No additional shoot cost.</div>
-  </div>
-  <div style="margin-top:8px">
-    <div class="slbl" style="margin-bottom:6px">Agreement Duration</div>
-    <div class="dbtns">
-      <div class="dbtn on" id="dur-12" onclick="selDur(12)">12 Months</div>
-      <div class="dbtn" id="dur-18" onclick="selDur(18)">18 Months</div>
-      <div class="dbtn" id="dur-24" onclick="selDur(24)">24 Months</div>
-    </div>
-  </div>
-  <div class="pchip" style="margin-top:8px"><span class="pcl">Monthly Total</span><span class="pca" id="smm-mo">BBD $3,500.00</span></div>`);}
+// ── RETAINER BRAND MANAGEMENT ────────────────────────────────────
+let retainerBrandIdCounter=2;
 
-function togAddon(id){const c=document.getElementById('ac-'+id);if(S.addons.has(id)){S.addons.delete(id);c.classList.remove('sel');}else{S.addons.add(id);c.classList.add('sel');}cSMM();}
-function cSMM(){let mo=R.smm;if(S.addons.has('linkedin'))mo+=R.linkedin;if(S.addons.has('tiktok'))mo+=R.tiktok;if(S.addons.has('mailchimp'))mo+=R.mailchimp;if(S.addons.has('community'))mo+=R.community;if(S.shoots>0)mo+=shootMo(S.shoots);upChip('smm-mo',mo);}
+function showBrandsIfRetainer(){
+  const sec=document.getElementById('brands-section');
+  if(sec)sec.style.display=S.type==='retainer'?'block':'none';
+  if(S.type==='retainer')renderBrands();
+}
+function renderBrands(){
+  const list=document.getElementById('brands-list');
+  if(!list)return;
+  if(!S.brands||!S.brands.length)S.brands=[{id:1,name:'',chassis:'smm',smmTier:'elite',contentTier:'tier2',addons:[]}];
+  list.innerHTML=S.brands.map(function(b,i){
+    return '<div class="vi" style="margin-bottom:8px">'+
+      '<div class="vi-title">Brand '+(i+1)+(b.name?' — '+b.name:'')+
+      (i>0?'<button class="vi-rm" data-bid="'+b.id+'" onclick="removeBrand(parseInt(this.dataset.bid))">Remove ✕</button>':'')+
+      '</div>'+
+      '<div class="dr c2">'+
+      '<div class="fgroup"><label class="fl">Brand Name</label>'+
+      '<input class="fi" placeholder="e.g. Digicel Play" value="'+b.name+'" data-bid="'+b.id+'" data-key="name" onchange="updateBrand(parseInt(this.dataset.bid),this.dataset.key,this.value)"/></div>'+
+      '<div class="fgroup"><label class="fl">Chassis</label>'+
+      '<select class="fsel" data-bid="'+b.id+'" data-key="chassis" onchange="updateBrand(parseInt(this.dataset.bid),this.dataset.key,this.value)">'+
+      '<option value="smm"'+(b.chassis==='smm'?' selected':'')+'>Social Media Management</option>'+
+      '<option value="content"'+(b.chassis==='content'?' selected':'')+'>Content Creation</option>'+
+      '<option value="hybrid"'+(b.chassis==='hybrid'?' selected':'')+'>Hybrid</option>'+
+      '</select></div>'+
+      '</div>'+
+      getBrandSmmHtml(b)+getBrandCcHtml(b)+getBrandAddonsHtml(b)+
+      '<div class="vi-price">Monthly: BBD $'+calcBrandMonthly(b).toLocaleString('en',{minimumFractionDigits:2})+'</div>'+
+    '</div>';
+  }).join('');
+}
+function getBrandSmmHtml(b){
+  if(b.chassis!=='smm'&&b.chassis!=='hybrid')return '';
+  const opts=Object.entries(R.smmTiers||{}).map(function(e){
+    return '<option value="'+e[0]+'"'+(b.smmTier===e[0]?' selected':'')+'>'+e[1].name+' — BBD $'+e[1].price.toLocaleString()+'/mo</option>';
+  }).join('');
+  return '<div class="fgroup"><label class="fl">SMM Tier</label><select class="fsel" data-bid="'+b.id+'" data-key="smmTier" onchange="updateBrand(parseInt(this.dataset.bid),this.dataset.key,this.value)">'+opts+'</select></div>';
+}
+function getBrandCcHtml(b){
+  if(b.chassis!=='content'&&b.chassis!=='hybrid')return '';
+  const opts=Object.entries(R.contentTiers||{}).map(function(e){
+    return '<option value="'+e[0]+'"'+(b.contentTier===e[0]?' selected':'')+'>'+e[1].name+' — BBD $'+e[1].total.toLocaleString()+'/mo</option>';
+  }).join('');
+  return '<div class="fgroup"><label class="fl">Content Tier</label><select class="fsel" data-bid="'+b.id+'" data-key="contentTier" onchange="updateBrand(parseInt(this.dataset.bid),this.dataset.key,this.value)">'+opts+'</select></div>';
+}
+function getBrandAddonsHtml(b){
+  if(b.chassis!=='smm'&&b.chassis!=='hybrid')return '';
+  const map={linkedin:'LinkedIn +$500',tiktok:'TikTok +$1k',mailchimp:'Email +$1k',community:'Community +$500'};
+  const btns=Object.entries(map).map(function(e){
+    const on=b.addons.indexOf(e[0])>-1;
+    return '<div class="dbtn'+(on?' on':'')+'" style="font-size:10px;padding:2px 8px" data-bid="'+b.id+'" data-addon="'+e[0]+'" onclick="togBrandAddonRetainer(this)">'+e[1]+'</div>';
+  }).join('');
+  return '<div class="fgroup"><label class="fl">Add-ons</label><div class="dbtns" style="flex-wrap:wrap;gap:5px">'+btns+'</div></div>';
+}
+function calcBrandMonthly(b){
+  let mo=0;
+  if(b.chassis==='smm'||b.chassis==='hybrid'){
+    const t=(R.smmTiers&&R.smmTiers[b.smmTier])||{price:3500};
+    mo+=t.price;
+    if(b.addons.indexOf('linkedin')>-1)mo+=R.linkedin||500;
+    if(b.addons.indexOf('tiktok')>-1)mo+=R.tiktok||1000;
+    if(b.addons.indexOf('mailchimp')>-1)mo+=R.mailchimp||1000;
+    if(b.addons.indexOf('community')>-1)mo+=R.community||500;
+  }
+  if(b.chassis==='content'||b.chassis==='hybrid'){
+    const ct=(R.contentTiers&&R.contentTiers[b.contentTier])||{total:2533};
+    mo+=ct.total;
+  }
+  return mo;
+}
+function addBrand(){S.brands.push({id:retainerBrandIdCounter++,name:'',chassis:'smm',smmTier:'elite',contentTier:'tier2',addons:[]});renderBrands();}
+function removeBrand(id){if(S.brands.length<=1)return;S.brands=S.brands.filter(function(b){return b.id!==id;});renderBrands();}
+function updateBrand(id,key,val){const b=S.brands.find(function(b){return b.id===id;});if(b){b[key]=val;renderBrands();}}
+function togBrandAddonRetainer(el){
+  const id=parseInt(el.dataset.bid),addon=el.dataset.addon;
+  const b=S.brands.find(function(b){return b.id===id;});
+  if(!b)return;
+  const idx=b.addons.indexOf(addon);
+  if(idx>-1)b.addons.splice(idx,1);else b.addons.push(addon);
+  renderBrands();
+}
+function getBrandNames(){return S.brands.filter(function(b){return b.name;}).map(function(b){return b.name;}).join(', ');}
+function getBrandsPayload(){return S.brands.map(function(b){return b.name+'('+b.chassis+'/'+b.smmTier+' $'+calcBrandMonthly(b).toLocaleString()+'/mo)';}).join('; ');}
+function getTotalMonthlyFromBrands(){
+  const named=S.brands.filter(function(b){return b.name;});
+  if(!named.length)return null;
+  return S.brands.reduce(function(a,b){return a+calcBrandMonthly(b);},0);
+}
+
+// ── RETAINER PRICING FORMULA ──────────────────────────────────────
+function cContentMonthly(shootsPerYear,lofiHrs){
+  const sv=R.shootValue||6500,disc=R.lockInDisc||0.20;
+  const shootComp=(sv*shootsPerYear*(1-disc))/12;
+  const bundled=Math.min(lofiHrs,R.lofiBundleHrs||4);
+  const overage=Math.max(lofiHrs-(R.lofiBundleHrs||4),0);
+  return Math.round((shootComp+bundled*(R.lofiBundleRate||200)+overage*(R.lofiOverageRate||150))*100)/100;
+}
+function getContentMonthly(){
+  if(S.contentTier==='custom')return cContentMonthly(S.contentShoots||0,S.contentLofi||0);
+  const t=R.contentTiers&&R.contentTiers[S.contentTier];
+  return t?t.total:2533;
+}
+function cRetainerTotal(){
+  const brandsTotal=getTotalMonthlyFromBrands();
+  if(brandsTotal!==null)return brandsTotal;
+  let mo=0;
+  const ch=S.chassis||'smm';
+  if(ch==='smm'||ch==='hybrid'){
+    const t=(R.smmTiers&&R.smmTiers[S.smmTier||'elite'])||{price:3500};
+    mo+=t.price;
+    if(S.addons.has('linkedin'))mo+=R.linkedin||500;
+    if(S.addons.has('tiktok'))mo+=R.tiktok||1000;
+    if(S.addons.has('mailchimp'))mo+=R.mailchimp||1000;
+    if(S.addons.has('community'))mo+=R.community||500;
+    if(S.shoots>0)mo+=shootMo(S.shoots);
+  }
+  if(ch==='content'||ch==='hybrid')mo+=getContentMonthly();
+  return mo;
+}
+
+// ── SMM PANEL ─────────────────────────────────────────────────────
+function smmPanel(){
+  const ch=S.chassis||'smm',ct=S.contentTier||'tier2',stk=S.smmTier||'elite';
+  function cCard(id,lbl,sub){
+    const sel=ch===id;
+    return '<div id="chassis-'+id+'" data-chassis="'+id+'" onclick="selChassis(this.dataset.chassis)" style="cursor:pointer;flex:1;border:2px solid '+(sel?'var(--cyan)':'var(--bdr)')+';border-radius:6px;padding:9px 10px">'+
+      '<div style="font-weight:700;font-size:11px;color:var(--navy);margin-bottom:2px">'+lbl+'</div>'+
+      '<div style="font-size:9px;color:var(--mut)">'+sub+'</div></div>';
+  }
+  function tCard(key,tier){
+    const sel=stk===key;
+    return '<div id="smm-tier-'+key+'" data-tier="'+key+'" onclick="selSmmTier(this.dataset.tier)" style="cursor:pointer;border:2px solid '+(sel?'var(--cyan)':'var(--bdr)')+';border-radius:6px;padding:8px 10px;margin-bottom:5px">'+
+      '<div style="display:flex;justify-content:space-between;margin-bottom:2px">'+
+      '<span style="font-weight:700;font-size:11px;color:var(--navy)">'+tier.name+'</span>'+
+      '<span style="font-weight:700;font-size:11px;color:var(--cyan);font-family:monospace">BBD $'+tier.price.toLocaleString()+'/mo</span>'+
+      '</div><div style="font-size:9px;color:var(--mut)">'+tier.desc+'</div></div>';
+  }
+  function ccCard(key,tier){
+    const sel=ct===key;
+    return '<div id="ct-'+key+'" data-tier="'+key+'" onclick="selContentTier(this.dataset.tier)" style="cursor:pointer;border:2px solid '+(sel?'var(--cyan)':'var(--bdr)')+';border-radius:6px;padding:8px 10px;margin-bottom:5px">'+
+      '<div style="display:flex;justify-content:space-between;margin-bottom:2px">'+
+      '<span style="font-weight:700;font-size:11px;color:var(--navy)">'+tier.name+'</span>'+
+      (tier.total?'<span style="font-weight:700;font-size:11px;color:var(--cyan);font-family:monospace">BBD $'+tier.total.toLocaleString()+'/mo</span>':'')+
+      '</div><div style="font-size:9px;color:var(--mut)">'+(tier.shootsPerYear?tier.shootsPerYear+' shoots/yr · '+tier.lofiHrs+'hrs lo-fi/mo':'Enter shoots/yr and lo-fi hrs manually')+'</div></div>';
+  }
+  return W('smm','Retainer — Select Chassis',
+    '<div class="slbl" style="margin-bottom:5px">Retainer Type</div>'+
+    '<div style="display:flex;gap:5px;margin-bottom:12px">'+
+    cCard('smm','Social Media Management','Management, scheduling & Meta ads')+
+    cCard('content','Content Creation','Photography, video & content')+
+    cCard('hybrid','Hybrid','Management + Content combined')+
+    '</div>'+
+    // SMM subpanel
+    '<div id="smm-subpanel" style="display:'+(ch==='smm'||ch==='hybrid'?'block':'none')+'">'+
+    '<div class="slbl" style="margin-bottom:5px">SMM Package</div>'+
+    Object.entries(R.smmTiers||{}).map(function(e){return tCard(e[0],e[1]);}).join('')+
+    '<div class="slbl" style="margin-bottom:5px;margin-top:8px">Add-ons</div>'+
+    '<div class="agrid">'+
+    '<div class="ac" id="ac-linkedin" data-id="linkedin" onclick="togAddon(this.dataset.id)"><div class="ac-h"><div class="ac-name">LinkedIn</div><div class="ac-tag">+$500/mo</div></div><div class="ac-desc">4 posts/month</div></div>'+
+    '<div class="ac" id="ac-tiktok" data-id="tiktok" onclick="togAddon(this.dataset.id)"><div class="ac-h"><div class="ac-name">TikTok</div><div class="ac-tag">+$1,000/mo</div></div><div class="ac-desc">4 posts/month</div></div>'+
+    '<div class="ac" id="ac-mailchimp" data-id="mailchimp" onclick="togAddon(this.dataset.id)"><div class="ac-h"><div class="ac-name">Email</div><div class="ac-tag">+$1,000/mo</div></div><div class="ac-desc">Up to 4 blasts/month</div></div>'+
+    '<div class="ac" id="ac-community" data-id="community" onclick="togAddon(this.dataset.id)"><div class="ac-h"><div class="ac-name">Community</div><div class="ac-tag">+$500/mo</div></div><div class="ac-desc">Active engagement</div></div>'+
+    '</div></div>'+
+    // Content subpanel
+    '<div id="cc-subpanel" style="display:'+(ch==='content'||ch==='hybrid'?'block':'none')+';margin-top:'+(ch==='hybrid'?'12':'0')+'px">'+
+    '<div class="slbl" style="margin-bottom:5px">Content Creation Tier</div>'+
+    Object.entries(R.contentTiers||{}).map(function(e){return ccCard(e[0],e[1]);}).join('')+
+    ccCard('custom',{name:'Custom',total:null,shootsPerYear:null,lofiHrs:null},'')+
+    '<div id="cc-custom-panel" style="display:'+(ct==='custom'?'block':'none')+';background:var(--off);border-radius:5px;padding:10px;margin-top:4px">'+
+    '<div class="dr c2">'+
+    '<div class="fgroup"><label class="fl">Shoots/year</label><input class="fi" type="number" id="cc-shoots" min="0" value="'+(S.contentShoots||4)+'" onchange="S.contentShoots=parseInt(this.value)||0;cSMM()"/></div>'+
+    '<div class="fgroup"><label class="fl">Lo-fi hrs/month</label><input class="fi" type="number" id="cc-lofi" min="0" value="'+(S.contentLofi||4)+'" onchange="S.contentLofi=parseInt(this.value)||0;cSMM()"/></div>'+
+    '</div>'+
+    '<div class="fn">$6,500 shoot value · 20% lock-in discount · First 4hrs lo-fi @ $200/hr, additional @ $150/hr</div>'+
+    '</div></div>'+
+    (S.brands&&S.brands.filter(function(b){return b.name;}).length>1?
+      '<div class="fn w" style="margin-top:8px">⚠ '+S.brands.length+' brands configured in Step 2 — monthly total reflects all brands combined.</div>':'')+
+    '<div style="margin-top:10px"><div class="slbl" style="margin-bottom:5px">Agreement Duration</div>'+
+    '<div class="dbtns">'+
+    '<div class="dbtn on" id="dur-12" onclick="selDur(12)">12 Months</div>'+
+    '<div class="dbtn" id="dur-18" onclick="selDur(18)">18 Months</div>'+
+    '<div class="dbtn" id="dur-24" onclick="selDur(24)">24 Months</div>'+
+    '</div></div>'+
+    '<div class="pchip" style="margin-top:8px"><span class="pcl">Monthly Total</span><span class="pca" id="smm-mo">BBD $3,500.00</span></div>'
+  );
+}
+
+function togAddon(id){if(id&&typeof id==='object')id=id.dataset?id.dataset.id:id;const c=document.getElementById('ac-'+id);if(!c)return;if(S.addons.has(id)){S.addons.delete(id);c.classList.remove('sel');}else{S.addons.add(id);c.classList.add('sel');}cSMM();}
+function cSMM(){upChip('smm-mo',cRetainerTotal());}
+function selChassis(c){
+  S.chassis=c;
+  ['smm','content','hybrid'].forEach(function(id){const el=document.getElementById('chassis-'+id);if(el)el.style.border='2px solid '+(id===c?'var(--cyan)':'var(--bdr)');});
+  const sp=document.getElementById('smm-subpanel'),cp=document.getElementById('cc-subpanel');
+  if(sp)sp.style.display=(c==='smm'||c==='hybrid')?'block':'none';
+  if(cp)cp.style.display=(c==='content'||c==='hybrid')?'block':'none';
+  cSMM();
+}
+function selSmmTier(key){
+  S.smmTier=key;
+  Object.keys(R.smmTiers||{}).forEach(function(k){const el=document.getElementById('smm-tier-'+k);if(el)el.style.border='2px solid '+(k===key?'var(--cyan)':'var(--bdr)');});
+  cSMM();
+}
+function selContentTier(key){
+  S.contentTier=key;
+  ['tier1','tier2','tier3','custom'].forEach(function(k){const el=document.getElementById('ct-'+k);if(el)el.style.border='2px solid '+(k===key?'var(--cyan)':'var(--bdr)');});
+  const cp=document.getElementById('cc-custom-panel');if(cp)cp.style.display=key==='custom'?'block':'none';
+  cSMM();
+}
 function shootMo(n){const c=(4*300)+(4*350)+(30*30)+(4*1000);return Math.round(c*n/12);}
-function selShoots(n){S.shoots=n;[0,1,2].forEach(i=>{const b=document.getElementById('sb-'+i);if(b)b.className='dbtn'+(i===n?' on':'');});const p=document.getElementById('shoot-prev');if(p)p.textContent=n===0?'No additional shoot cost.':`${n} shoot(s)/year ÷ 12 = +BBD $${shootMo(n).toLocaleString()}/month`;cSMM();}
+function selShoots(n){S.shoots=n;[0,1,2].forEach(i=>{const b=document.getElementById('sb-'+i);if(b)b.className='dbtn'+(i===n?' on':'');});cSMM();}
 function selDur(m){S.dur=m;S.retDur=m;[12,18,24].forEach(d=>{const b=document.getElementById('dur-'+d);if(b)b.className='dbtn'+(d===m?' on':'');});}
 
 function digitalPanel(){return W('digital','Digital Campaign Development',`
@@ -1318,7 +1511,6 @@ function enforceAgree(){
 }
 
 // ═══ LINE ITEMS ════════════════════════════════════
-function getMF(id){return parseFloat(manFees[id]||g(id+'-fee')||0);}
 
 function getItems(){
   const items=[],sv=S.svcs,t=S.type;
@@ -1839,6 +2031,12 @@ function buildDraftData(){
     shoots:S.shoots,
     dur:S.dur,
     retDur:S.retDur,
+    smmTier:S.smmTier||'elite',
+    chassis:S.chassis||'smm',
+    contentTier:S.contentTier||'tier2',
+    contentShoots:S.contentShoots||4,
+    contentLofi:S.contentLofi||4,
+    brands:JSON.parse(JSON.stringify(S.brands||[])),
     maxStep:S.maxStep,
     discount:S.discount,
     rush:S.rush,
@@ -1885,6 +2083,12 @@ function restoreDraftData(data,key){
   S.shoots=data.shoots||0;
   S.dur=data.dur||12;
   S.retDur=data.retDur||12;
+  S.smmTier=data.smmTier||'elite';
+  S.chassis=data.chassis||'smm';
+  S.contentTier=data.contentTier||'tier2';
+  S.contentShoots=data.contentShoots||4;
+  S.contentLofi=data.contentLofi||4;
+  S.brands=data.brands&&data.brands.length?data.brands:[{id:1,name:'',chassis:'smm',smmTier:'elite',contentTier:'tier2',addons:[]}];
   S.maxStep=data.maxStep||8;
   S.discount=data.discount||0;
   S.rush=data.rush||0;
@@ -2346,6 +2550,12 @@ function buildPayload(){
 
     // Totals — single value replacements
     subtotal:      fmtAmt(subFinal2),
+    monthlySubtotal: S.type==='retainer'?fmtAmt(sub):'',
+    monthlyVat:      S.type==='retainer'?fmtAmt(vat):'',
+    monthlyTotal:    S.type==='retainer'?fmtAmt(tot):'',
+    annualTotal:     S.type==='retainer'?fmtAmt(tot*(S.retDur||12)):'',
+    retainerStart:   S.type==='retainer'?fmtDate(g('retStart')):'',
+    retainerDuration:S.type==='retainer'?String(S.retDur||12)+' months':'',
     vatAmount:     fmtAmt(vat),
     totalFee:      fmtAmt(tot),
     depositLabel:  depLbl,
@@ -2368,6 +2578,11 @@ function buildPayload(){
 
     // Proposal type
     proposalType: S.type,
+    smmTierName:     S.type==='retainer'?((R.smmTiers&&R.smmTiers[S.smmTier||'elite'])||{name:'Elite'}).name:'',
+    chassis:         S.type==='retainer'?(S.chassis||'smm'):'',
+    brandCount:      S.type==='retainer'?String(S.brands?S.brands.length:1):'',
+    brandNames:      S.type==='retainer'?getBrandNames():'',
+    brandsInternal:  S.type==='retainer'?getBrandsPayload():'',
     userEmail:    getLoggedInEmail(),
     // ── Table flat text (current — single-value template replacement) ──
     // Each row is tab-separated columns, rows separated by newlines
