@@ -307,7 +307,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--off);color:var(--text);mi
       <div class="ph"><div class="plabel">Step 1</div><div class="ptitle">Proposal Type</div><div class="pdesc">Select the agreement type. This determines the template, timeline, and pricing logic throughout.</div></div>
       <div class="tsel">
         <div class="tc" id="tc-p" onclick="selType('project')"><div class="tc-icon">📋</div><div class="tc-name">Project</div><div class="tc-desc">Fixed scope, defined timeline, one-time fee. Campaigns, productions, brand work, web builds.</div><div class="tc-rule">Includes all agreements under 6 months</div></div>
-        <div class="tc" id="tc-r" onclick="selType('retainer')"><div class="tc-icon">🔄</div><div class="tc-name">Retainer</div><div class="tc-desc">Ongoing monthly agreement, minimum 12 months. SMM, content, ongoing marketing.</div><div class="tc-rule">Minimum 12 months to qualify</div></div>
+        <div class="tc" id="tc-r" onclick="selType('retainer')"><div class="tc-icon">🔄</div><div class="tc-name">Retainer Agreement</div><div class="tc-desc">Ongoing monthly agreement for social media management, content creation, or a hybrid of both.</div><div class="tc-rule" style="color:var(--mut)">Standard term: 12 months</div></div>
       </div>
       <div class="fnav"><div></div><button class="btn bp" id="t1next" onclick="go(2)" disabled>Next: Client Info →</button></div>
     </div>
@@ -324,17 +324,16 @@ body{font-family:'DM Sans',sans-serif;background:var(--off);color:var(--text);mi
         <div class="fgroup"><label class="fl">Proposal Date <span class="r">*</span></label><input class="fi" id="proposalDate" type="date"/></div>
       </div>
       <div id="brands-section" style="display:none;margin-top:12px">
-        <div class="slbl" style="margin-bottom:6px">Brands / Accounts <span style="font-weight:400;font-size:10px;color:var(--mut)">(retainer only — each brand can have its own package)</span></div>
+        <div class="slbl" style="margin-bottom:6px">Brands / Accounts</div>
         <div id="brands-list"></div>
         <button class="add-vid" onclick="addBrand()" style="margin-top:6px">+ Add another brand</button>
-        <div class="fn" style="margin-top:6px">Per-brand pricing is internal only. The client sees a single combined total.</div>
       </div>
-      <div class="fnav"><button class="btn bg" onclick="go(1)">← Back</button><button class="btn bp" onclick="go(3)">Next: Overview →</button></div>
+      <div class="fnav"><button class="btn bg" onclick="go(1)">← Back</button><button class="btn bp" onclick="go(3)">Next: Brief →</button></div>
     </div>
 
     <!-- S3: OVERVIEW -->
     <div class="sp" id="step-3">
-      <div class="ph"><div class="plabel">Step 3</div><div class="ptitle">Project Overview</div><div class="pdesc">Write naturally — Claude will refine the language in the final output.</div></div>
+      <div class="ph"><div class="plabel">Step 3</div><div class="ptitle" id="step3title">Proposal Brief</div><div class="pdesc">Describe the engagement in plain language. Claude will refine the language in the final document.</div></div>
       <div class="fg">
         <div class="fgroup full"><label class="fl">What is the client seeking? <span class="r">*</span></label><input class="fi" id="projDesc" placeholder="e.g. high-quality campaign content for their upcoming product launch"/><span class="fhint">Completes: "[Client] is seeking [your answer]..."</span></div>
         <div class="fgroup full"><label class="fl">Project Objectives <span class="r">*</span></label><input class="fi" id="projObj" placeholder="e.g. elevate brand presence ahead of the 2026 tourism season"/><span class="fhint">Completes: "...with the aim of [your answer]"</span></div>
@@ -368,8 +367,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--off);color:var(--text);mi
     <div class="sp" id="step-7">
       <div class="ph"><div class="plabel">Step 7</div><div class="ptitle">Agreement Timeline</div><div class="pdesc">Formal agreement dates. Work commences on receipt of deposit. Final assets released on receipt of outstanding balance in full.</div></div>
       <div class="fg">
-        <div class="fgroup"><label class="fl">Agreement Start Date</label><input class="fi" id="agreeStart" type="date" onchange="enforceAgree()"/></div>
-        <div class="fgroup"><label class="fl">Agreement End Date</label><input class="fi" id="agreeEnd" type="date" onchange="enforceAgree()"/><span class="fhint e" id="agreeErr" style="display:none">End date cannot be before start date.</span></div>
+        <div class="fgroup" id="agreeStartWrap"><label class="fl">Agreement Start Date</label><input class="fi" id="agreeStart" type="date" onchange="enforceAgree()"/></div>
+        <div class="fgroup" id="agreeEndWrap"><label class="fl">Agreement End Date</label><input class="fi" id="agreeEnd" type="date" onchange="enforceAgree()"/><span class="fhint e" id="agreeErr" style="display:none">End date cannot be before start date.</span></div>
+        <div class="fgroup full" id="retainerAgreeNote" style="display:none"><div class="fn" style="background:var(--off);border:1px solid var(--bdr);border-radius:5px;padding:10px">Agreement dates are set by the retainer start date and duration selected in the Timeline step. No further input is needed here.</div></div>
         <div class="fgroup full"><label class="fl">Payment Structure</label>
           <select class="fsel" id="payStr" onchange="S.payStr=this.value"><option value="50">50% Mobilization Deposit / 50% on Completion</option><option value="30">30% Deposit / 70% on Completion</option><option value="25_25_50">25% / 25% / 50% Instalment Plan</option><option value="100">100% Upfront</option></select>
         </div>
@@ -444,7 +444,8 @@ let R={
   smmTiers:{
     essentials:{name:'Essentials',price:2200,posts:12,desc:'1 Instagram · 12 posts/mo · Lo-fi capture · Meta Ads'},
     essentialsPlus:{name:'Essentials Plus',price:2500,posts:14,desc:'Meta pages · 14 posts/mo · Lo-fi capture · Meta Ads'},
-    elite:{name:'Elite',price:3500,posts:12,desc:'Meta pages · 12 posts/mo · Monthly report · 4hrs lo-fi/mo · 1 major shoot/yr · Meta Ads'}
+    elite:{name:'Elite',price:3500,posts:12,desc:'Meta pages · 12 posts/mo · Monthly report · 4hrs lo-fi/mo · 1 major shoot/yr · Meta Ads'},
+    elitePro:{name:'Elite Pro',price:3500,posts:12,desc:'All Elite deliverables · Unlocks add-on services (LinkedIn, TikTok, Email, Community)',unlocksAddons:true}
   },
   contentTiers:{
     tier1:{name:'Tier 1 — Lite',    shootsPerYear:2,lofiHrs:2,total:1267},
@@ -673,7 +674,10 @@ function restoreCurrentFields(){
     cSMM();
   }
   // Restore retainer duration buttons if on TL step
-  if(S.type==='retainer'&&document.getElementById('rdur-12'))selRetDur(S.retDur||12);
+  if(S.type==='retainer'&&document.getElementById('rdur-12')){
+    selRetDur(S.retDur||12);
+    setTimeout(calcRetainerEndDate,100);
+  }
   // Sync smm-months field with S.dur
   const smmMoEl=document.getElementById('smm-months');
   if(smmMoEl)smmMoEl.value=S.dur||12;
@@ -696,7 +700,22 @@ function validateStep(from){
     if(!g('projObj'))missing.push('Project Objectives');
     if(missing.length){showStepErr('Please complete the following required fields: '+missing.join(', ')+'.');return false;}
   }
-  if(from===4&&!S.svcs.size){showStepErr('Please select at least one service before continuing.');return false;}
+  if(from===4){
+    if(S.type==='retainer'){
+      // Retainer: smm auto-selected — just ensure chassis is set
+      S.svcs.add('smm');
+    } else if(!S.svcs.size){
+      showStepErr('Please select at least one service before continuing.');return false;
+    }
+  }
+  if(from===6&&S.type==='retainer'){
+    if(!g('retStart')){showStepErr('Please select a Retainer Start Date before continuing.');return false;}
+  }
+  if(from===6&&S.type==='project'){
+    const missing=[];
+    if(!g('preStart')&&!g('shootStart')&&!g('postStart'))missing.push('at least one timeline phase');
+    if(missing.length){showStepErr('Please fill in '+missing.join(', ')+' before continuing.');return false;}
+  }
   return true;
 }
 
@@ -712,6 +731,7 @@ function go(n){
   // Validate when moving forward
   if(n>S.step&&!validateStep(S.step))return;
   if(n===2)setTimeout(function(){showBrandsIfRetainer();},50);
+  else if(n===7)setTimeout(function(){applyRetainerAgreementUi();},50);
   else if(n===5){captureCurrentFields();buildDels();restoreCurrentFields();}
   else if(n===6){captureCurrentFields();buildTL();restoreCurrentFields();}
   else if(n===8){captureCurrentFields();buildFee();}
@@ -758,7 +778,7 @@ function buildSvcs(){
       {id:'print',n:'Print Facilitation',c:'15% markup on cost'},
     ]},
     {lbl:'Marketing & Strategy',svcs:[
-      ...(t==='retainer'?[{id:'smm',n:'Social Media Management',c:'From $3,500/month'}]:[]),
+      ...(t==='retainer'?[]:[]),  // retainer: no smm card here — handled by renderRetainerScope
       {id:'campaign',n:'Campaign Strategy & Execution',c:'Manual pricing'},
       {id:'digital',n:'Digital Campaign Development',c:'$2,500/month'},
       {id:'influencer',n:'Influencer Management',c:'Manual pricing'},
@@ -787,7 +807,15 @@ function buildSvcs(){
     });
     html+='</div>';
   });
+  if(t==='retainer'){
+    renderRetainerScope(c);
+    return;
+  }
   c.innerHTML=html;
+}
+
+function renderRetainerScope(container){
+  renderBrandPackages(container);
 }
 
 function togSvc(id){
@@ -826,6 +854,7 @@ function buildDels(){
   if(sv.has('webdesign'))html+=manPanel('webdesign','Web Design');
   if(sv.has('webdev'))html+=manPanel('webdev','Web Development');
   c.innerHTML=html;
+  if(sv.has('smm')&&S.type==='retainer'){renderBrandTiers();cSMM();}
   if(sv.has('videography'))renderVids();
   if(sv.has('graphic'))renderGfxRows();
 }
@@ -1098,90 +1127,204 @@ function cPrint(){const s=pf('print-cost');upChip('print-price',s+(s*0.15));}
 // ── RETAINER BRAND MANAGEMENT ────────────────────────────────────
 let retainerBrandIdCounter=2;
 
+function newBrand(id){
+  return {id:id,name:'',chassis:'smm',smmTier:'elite',contentTier:'tier2',contentShoots:4,contentLofi:4,addons:[]};
+}
+function ensureBrands(){
+  if(!S.brands||!S.brands.length)S.brands=[newBrand(1)];
+  S.brands.forEach(function(b){
+    if(!b.addons)b.addons=[];
+    if(!b.chassis)b.chassis='smm';
+    if(!b.smmTier)b.smmTier='elite';
+    if(!b.contentTier)b.contentTier='tier2';
+    if(b.contentShoots===undefined)b.contentShoots=4;
+    if(b.contentLofi===undefined)b.contentLofi=4;
+  });
+}
 function showBrandsIfRetainer(){
   const sec=document.getElementById('brands-section');
   if(sec)sec.style.display=S.type==='retainer'?'block':'none';
   if(S.type==='retainer')renderBrands();
 }
+
+// STEP 2 — brand names only
 function renderBrands(){
   const list=document.getElementById('brands-list');
   if(!list)return;
-  if(!S.brands||!S.brands.length)S.brands=[{id:1,name:'',chassis:'smm',smmTier:'elite',contentTier:'tier2',addons:[]}];
+  ensureBrands();
   list.innerHTML=S.brands.map(function(b,i){
-    return '<div class="vi" style="margin-bottom:8px">'+
-      '<div class="vi-title">Brand '+(i+1)+(b.name?' — '+b.name:'')+
-      (i>0?'<button class="vi-rm" data-bid="'+b.id+'" onclick="removeBrand(parseInt(this.dataset.bid))">Remove ✕</button>':'')+
+    return '<div class="vi" style="margin-bottom:6px">'+
+      '<div class="vi-title">Brand '+(i+1)+
+      (i>0?'<button class="vi-rm" data-bid="'+b.id+'" onclick="removeBrand(parseInt(this.dataset.bid))">Remove \u2715</button>':'')+
       '</div>'+
-      '<div class="dr c2">'+
-      '<div class="fgroup"><label class="fl">Brand Name</label>'+
+      '<div class="fgroup" style="margin-bottom:0"><label class="fl">Brand Name</label>'+
       '<input class="fi" placeholder="e.g. Digicel Play" value="'+b.name+'" data-bid="'+b.id+'" data-key="name" onchange="updateBrand(parseInt(this.dataset.bid),this.dataset.key,this.value)"/></div>'+
-      '<div class="fgroup"><label class="fl">Chassis</label>'+
-      '<select class="fsel" data-bid="'+b.id+'" data-key="chassis" onchange="updateBrand(parseInt(this.dataset.bid),this.dataset.key,this.value)">'+
-      '<option value="smm"'+(b.chassis==='smm'?' selected':'')+'>Social Media Management</option>'+
-      '<option value="content"'+(b.chassis==='content'?' selected':'')+'>Content Creation</option>'+
-      '<option value="hybrid"'+(b.chassis==='hybrid'?' selected':'')+'>Hybrid</option>'+
-      '</select></div>'+
-      '</div>'+
-      getBrandSmmHtml(b)+getBrandCcHtml(b)+getBrandAddonsHtml(b)+
+    '</div>';
+  }).join('');
+}
+
+// STEP 4 — package type per brand
+function renderBrandPackages(container){
+  ensureBrands();
+  const named=S.brands.filter(function(b){return b.name;});
+  const useBrands=named.length>0;
+  let html='<div class="slbl" style="margin-bottom:6px">Package Selection'+(useBrands?' \u2014 per brand':'')+'</div>';
+  if(useBrands){
+    html+=S.brands.map(function(b,i){
+      return '<div class="vi" style="margin-bottom:8px">'+
+        '<div class="vi-title">'+(b.name||('Brand '+(i+1)))+'</div>'+
+        '<div class="fgroup" style="margin-bottom:0"><label class="fl">Package Type</label>'+
+        '<select class="fsel" data-bid="'+b.id+'" data-key="chassis" onchange="updateBrandPackage(parseInt(this.dataset.bid),this.dataset.key,this.value)">'+
+        '<option value="smm"'+(b.chassis==='smm'?' selected':'')+'>Social Media Management</option>'+
+        '<option value="content"'+(b.chassis==='content'?' selected':'')+'>Content Production</option>'+
+        '<option value="hybrid"'+(b.chassis==='hybrid'?' selected':'')+'>Management + Production</option>'+
+        '</select></div>'+
+      '</div>';
+    }).join('');
+  } else {
+    html+='<div class="fgroup"><label class="fl">Package Type</label>'+
+      '<select class="fsel" onchange="selChassis(this.value)">'+
+      '<option value="smm"'+((S.chassis||'smm')==='smm'?' selected':'')+'>Social Media Management</option>'+
+      '<option value="content"'+(S.chassis==='content'?' selected':'')+'>Content Production</option>'+
+      '<option value="hybrid"'+(S.chassis==='hybrid'?' selected':'')+'>Management + Production</option>'+
+      '</select></div>';
+  }
+  html+='<div class="fn" style="margin-top:8px">Specific package tiers and add-ons are selected in the next step.</div>';
+  container.innerHTML=html;
+  S.svcs.add('smm');
+}
+function updateBrandPackage(id,key,val){
+  const b=S.brands.find(function(b){return b.id===id;});
+  if(b){
+    b[key]=val;
+    // Clear addons if package no longer unlocks them
+    if(!brandUnlocksAddons(b))b.addons=[];
+    const c=document.getElementById('svcsContainer');
+    if(c)renderBrandPackages(c);
+  }
+}
+function brandUnlocksAddons(b){
+  const smmUnlocks=(b.chassis==='smm'||b.chassis==='hybrid')&&b.smmTier==='elitePro';
+  const ccUnlocks=(b.chassis==='content'||b.chassis==='hybrid')&&b.contentTier==='custom';
+  return smmUnlocks||ccUnlocks;
+}
+
+// STEP 5 — tier selection + add-ons per brand
+function renderBrandTiers(){
+  const wrap=document.getElementById('brand-tiers-list');
+  if(!wrap)return;
+  ensureBrands();
+  const named=S.brands.filter(function(b){return b.name;});
+  if(!named.length){
+    wrap.innerHTML=singleBrandTierHtml();
+    return;
+  }
+  wrap.innerHTML=S.brands.map(function(b,i){
+    return '<div class="vi" style="margin-bottom:10px">'+
+      '<div class="vi-title">'+(b.name||('Brand '+(i+1)))+' \u2014 '+chassisLabel(b.chassis)+'</div>'+
+      brandSmmTierHtml(b)+brandCcTierHtml(b)+brandAddonsHtml(b)+
       '<div class="vi-price">Monthly: BBD $'+calcBrandMonthly(b).toLocaleString('en',{minimumFractionDigits:2})+'</div>'+
     '</div>';
   }).join('');
 }
-function getBrandSmmHtml(b){
+function chassisLabel(c){
+  return {smm:'Social Media Management',content:'Content Production',hybrid:'Management + Production'}[c]||'Social Media Management';
+}
+function brandSmmTierHtml(b){
   if(b.chassis!=='smm'&&b.chassis!=='hybrid')return '';
   const opts=Object.entries(R.smmTiers||{}).map(function(e){
-    return '<option value="'+e[0]+'"'+(b.smmTier===e[0]?' selected':'')+'>'+e[1].name+' — BBD $'+e[1].price.toLocaleString()+'/mo</option>';
+    return '<option value="'+e[0]+'"'+(b.smmTier===e[0]?' selected':'')+'>'+e[1].name+' \u2014 BBD $'+e[1].price.toLocaleString()+'/mo</option>';
   }).join('');
-  return '<div class="fgroup"><label class="fl">SMM Tier</label><select class="fsel" data-bid="'+b.id+'" data-key="smmTier" onchange="updateBrand(parseInt(this.dataset.bid),this.dataset.key,this.value)">'+opts+'</select></div>';
+  const tier=(R.smmTiers&&R.smmTiers[b.smmTier])||{desc:''};
+  return '<div class="fgroup"><label class="fl">SMM Package</label>'+
+    '<select class="fsel" data-bid="'+b.id+'" data-key="smmTier" onchange="updateBrandTier(parseInt(this.dataset.bid),this.dataset.key,this.value)">'+opts+'</select>'+
+    '<span class="fhint">'+(tier.desc||'')+'</span></div>';
 }
-function getBrandCcHtml(b){
+function brandCcTierHtml(b){
   if(b.chassis!=='content'&&b.chassis!=='hybrid')return '';
-  const opts=Object.entries(R.contentTiers||{}).map(function(e){
-    return '<option value="'+e[0]+'"'+(b.contentTier===e[0]?' selected':'')+'>'+e[1].name+' — BBD $'+e[1].total.toLocaleString()+'/mo</option>';
+  let opts=Object.entries(R.contentTiers||{}).map(function(e){
+    return '<option value="'+e[0]+'"'+(b.contentTier===e[0]?' selected':'')+'>'+e[1].name+' \u2014 BBD $'+e[1].total.toLocaleString()+'/mo</option>';
   }).join('');
-  return '<div class="fgroup"><label class="fl">Content Tier</label><select class="fsel" data-bid="'+b.id+'" data-key="contentTier" onchange="updateBrand(parseInt(this.dataset.bid),this.dataset.key,this.value)">'+opts+'</select></div>';
+  opts+='<option value="custom"'+(b.contentTier==='custom'?' selected':'')+'>Custom \u2014 configure below</option>';
+  let html='<div class="fgroup"><label class="fl">Content Package</label>'+
+    '<select class="fsel" data-bid="'+b.id+'" data-key="contentTier" onchange="updateBrandTier(parseInt(this.dataset.bid),this.dataset.key,this.value)">'+opts+'</select></div>';
+  if(b.contentTier==='custom'){
+    html+='<div style="background:var(--off);border-radius:5px;padding:9px;margin-bottom:6px">'+
+      '<div class="dr c2">'+
+      '<div class="fgroup" style="margin-bottom:0"><label class="fl">Shoots/year</label>'+
+      '<input class="fi" type="number" min="0" value="'+(b.contentShoots||4)+'" data-bid="'+b.id+'" data-key="contentShoots" onchange="updateBrandTier(parseInt(this.dataset.bid),this.dataset.key,parseInt(this.value)||0)"/></div>'+
+      '<div class="fgroup" style="margin-bottom:0"><label class="fl">Lo-fi hrs/month</label>'+
+      '<input class="fi" type="number" min="0" value="'+(b.contentLofi||4)+'" data-bid="'+b.id+'" data-key="contentLofi" onchange="updateBrandTier(parseInt(this.dataset.bid),this.dataset.key,parseInt(this.value)||0)"/></div>'+
+      '</div></div>';
+  }
+  return html;
 }
-function getBrandAddonsHtml(b){
-  if(b.chassis!=='smm'&&b.chassis!=='hybrid')return '';
-  const map={linkedin:'LinkedIn +$500',tiktok:'TikTok +$1k',mailchimp:'Email +$1k',community:'Community +$500'};
+function brandAddonsHtml(b){
+  if(!brandUnlocksAddons(b))return '';
+  const map={linkedin:'LinkedIn +$500',tiktok:'TikTok +$1,000',mailchimp:'Email +$1,000',community:'Community +$500'};
   const btns=Object.entries(map).map(function(e){
     const on=b.addons.indexOf(e[0])>-1;
-    return '<div class="dbtn'+(on?' on':'')+'" style="font-size:10px;padding:2px 8px" data-bid="'+b.id+'" data-addon="'+e[0]+'" onclick="togBrandAddonRetainer(this)">'+e[1]+'</div>';
+    return '<div class="dbtn'+(on?' on':'')+'" style="font-size:10px;padding:3px 9px" data-bid="'+b.id+'" data-addon="'+e[0]+'" onclick="togBrandAddonRetainer(this)">'+e[1]+'</div>';
   }).join('');
-  return '<div class="fgroup"><label class="fl">Add-ons</label><div class="dbtns" style="flex-wrap:wrap;gap:5px">'+btns+'</div></div>';
+  return '<div class="fgroup"><label class="fl">Add-on Services <span style="font-weight:400;color:var(--mut);font-size:9.5px">(unlocked by this package)</span></label>'+
+    '<div class="dbtns" style="flex-wrap:wrap;gap:5px">'+btns+'</div></div>';
 }
-function calcBrandMonthly(b){
-  let mo=0;
-  if(b.chassis==='smm'||b.chassis==='hybrid'){
-    const t=(R.smmTiers&&R.smmTiers[b.smmTier])||{price:3500};
-    mo+=t.price;
-    if(b.addons.indexOf('linkedin')>-1)mo+=R.linkedin||500;
-    if(b.addons.indexOf('tiktok')>-1)mo+=R.tiktok||1000;
-    if(b.addons.indexOf('mailchimp')>-1)mo+=R.mailchimp||1000;
-    if(b.addons.indexOf('community')>-1)mo+=R.community||500;
-  }
-  if(b.chassis==='content'||b.chassis==='hybrid'){
-    const ct=(R.contentTiers&&R.contentTiers[b.contentTier])||{total:2533};
-    mo+=ct.total;
-  }
-  return mo;
+function singleBrandTierHtml(){
+  ensureBrands();
+  const b=S.brands[0];
+  b.chassis=S.chassis||b.chassis||'smm';
+  return '<div class="vi">'+
+    '<div class="vi-title">'+chassisLabel(b.chassis)+'</div>'+
+    brandSmmTierHtml(b)+brandCcTierHtml(b)+brandAddonsHtml(b)+
+    '<div class="vi-price">Monthly: BBD $'+calcBrandMonthly(b).toLocaleString('en',{minimumFractionDigits:2})+'</div>'+
+  '</div>';
 }
-function addBrand(){S.brands.push({id:retainerBrandIdCounter++,name:'',chassis:'smm',smmTier:'elite',contentTier:'tier2',addons:[]});renderBrands();}
-function removeBrand(id){if(S.brands.length<=1)return;S.brands=S.brands.filter(function(b){return b.id!==id;});renderBrands();}
-function updateBrand(id,key,val){const b=S.brands.find(function(b){return b.id===id;});if(b){b[key]=val;renderBrands();}}
+function updateBrandTier(id,key,val){
+  const b=S.brands.find(function(b){return b.id===id;});
+  if(!b)return;
+  b[key]=val;
+  if(!brandUnlocksAddons(b))b.addons=[];
+  renderBrandTiers();
+  cSMM();
+}
 function togBrandAddonRetainer(el){
   const id=parseInt(el.dataset.bid),addon=el.dataset.addon;
   const b=S.brands.find(function(b){return b.id===id;});
   if(!b)return;
   const idx=b.addons.indexOf(addon);
   if(idx>-1)b.addons.splice(idx,1);else b.addons.push(addon);
-  renderBrands();
+  renderBrandTiers();
+  cSMM();
 }
-function getBrandNames(){return S.brands.filter(function(b){return b.name;}).map(function(b){return b.name;}).join(', ');}
-function getBrandsPayload(){return S.brands.map(function(b){return b.name+'('+b.chassis+'/'+b.smmTier+' $'+calcBrandMonthly(b).toLocaleString()+'/mo)';}).join('; ');}
+function calcBrandMonthly(b){
+  let mo=0;
+  if(b.chassis==='smm'||b.chassis==='hybrid'){
+    const t=(R.smmTiers&&R.smmTiers[b.smmTier])||{price:3500};
+    mo+=t.price;
+    if(brandUnlocksAddons(b)){
+      if(b.addons.indexOf('linkedin')>-1)mo+=R.linkedin||500;
+      if(b.addons.indexOf('tiktok')>-1)mo+=R.tiktok||1000;
+      if(b.addons.indexOf('mailchimp')>-1)mo+=R.mailchimp||1000;
+      if(b.addons.indexOf('community')>-1)mo+=R.community||500;
+    }
+  }
+  if(b.chassis==='content'||b.chassis==='hybrid'){
+    if(b.contentTier==='custom'){
+      mo+=cContentMonthly(b.contentShoots||0,b.contentLofi||0);
+    } else {
+      const ct=(R.contentTiers&&R.contentTiers[b.contentTier])||{total:2533};
+      mo+=ct.total;
+    }
+  }
+  return mo;
+}
+function addBrand(){ensureBrands();S.brands.push(newBrand(retainerBrandIdCounter++));renderBrands();}
+function removeBrand(id){if(S.brands.length<=1)return;S.brands=S.brands.filter(function(b){return b.id!==id;});renderBrands();}
+function updateBrand(id,key,val){const b=S.brands.find(function(b){return b.id===id;});if(b){b[key]=val;renderBrands();}}
+function getBrandNames(){ensureBrands();return S.brands.filter(function(b){return b.name;}).map(function(b){return b.name;}).join(', ');}
+function getBrandsPayload(){ensureBrands();return S.brands.map(function(b){return (b.name||'Brand')+'('+b.chassis+'/'+b.smmTier+' $'+calcBrandMonthly(b).toLocaleString()+'/mo)';}).join('; ');}
 function getTotalMonthlyFromBrands(){
-  const named=S.brands.filter(function(b){return b.name;});
-  if(!named.length)return null;
+  ensureBrands();
   return S.brands.reduce(function(a,b){return a+calcBrandMonthly(b);},0);
 }
 
@@ -1199,114 +1342,34 @@ function getContentMonthly(){
   return t?t.total:2533;
 }
 function cRetainerTotal(){
-  const brandsTotal=getTotalMonthlyFromBrands();
-  if(brandsTotal!==null)return brandsTotal;
-  let mo=0;
-  const ch=S.chassis||'smm';
-  if(ch==='smm'||ch==='hybrid'){
-    const t=(R.smmTiers&&R.smmTiers[S.smmTier||'elite'])||{price:3500};
-    mo+=t.price;
-    if(S.addons.has('linkedin'))mo+=R.linkedin||500;
-    if(S.addons.has('tiktok'))mo+=R.tiktok||1000;
-    if(S.addons.has('mailchimp'))mo+=R.mailchimp||1000;
-    if(S.addons.has('community'))mo+=R.community||500;
-    if(S.shoots>0)mo+=shootMo(S.shoots);
-  }
-  if(ch==='content'||ch==='hybrid')mo+=getContentMonthly();
-  return mo;
+  ensureBrands();
+  return S.brands.reduce(function(a,b){return a+calcBrandMonthly(b);},0);
 }
 
 // ── SMM PANEL ─────────────────────────────────────────────────────
 function smmPanel(){
-  const ch=S.chassis||'smm',ct=S.contentTier||'tier2',stk=S.smmTier||'elite';
-  function cCard(id,lbl,sub){
-    const sel=ch===id;
-    return '<div id="chassis-'+id+'" data-chassis="'+id+'" onclick="selChassis(this.dataset.chassis)" style="cursor:pointer;flex:1;border:2px solid '+(sel?'var(--cyan)':'var(--bdr)')+';border-radius:6px;padding:9px 10px">'+
-      '<div style="font-weight:700;font-size:11px;color:var(--navy);margin-bottom:2px">'+lbl+'</div>'+
-      '<div style="font-size:9px;color:var(--mut)">'+sub+'</div></div>';
-  }
-  function tCard(key,tier){
-    const sel=stk===key;
-    return '<div id="smm-tier-'+key+'" data-tier="'+key+'" onclick="selSmmTier(this.dataset.tier)" style="cursor:pointer;border:2px solid '+(sel?'var(--cyan)':'var(--bdr)')+';border-radius:6px;padding:8px 10px;margin-bottom:5px">'+
-      '<div style="display:flex;justify-content:space-between;margin-bottom:2px">'+
-      '<span style="font-weight:700;font-size:11px;color:var(--navy)">'+tier.name+'</span>'+
-      '<span style="font-weight:700;font-size:11px;color:var(--cyan);font-family:monospace">BBD $'+tier.price.toLocaleString()+'/mo</span>'+
-      '</div><div style="font-size:9px;color:var(--mut)">'+tier.desc+'</div></div>';
-  }
-  function ccCard(key,tier){
-    const sel=ct===key;
-    return '<div id="ct-'+key+'" data-tier="'+key+'" onclick="selContentTier(this.dataset.tier)" style="cursor:pointer;border:2px solid '+(sel?'var(--cyan)':'var(--bdr)')+';border-radius:6px;padding:8px 10px;margin-bottom:5px">'+
-      '<div style="display:flex;justify-content:space-between;margin-bottom:2px">'+
-      '<span style="font-weight:700;font-size:11px;color:var(--navy)">'+tier.name+'</span>'+
-      (tier.total?'<span style="font-weight:700;font-size:11px;color:var(--cyan);font-family:monospace">BBD $'+tier.total.toLocaleString()+'/mo</span>':'')+
-      '</div><div style="font-size:9px;color:var(--mut)">'+(tier.shootsPerYear?tier.shootsPerYear+' shoots/yr · '+tier.lofiHrs+'hrs lo-fi/mo':'Enter shoots/yr and lo-fi hrs manually')+'</div></div>';
-  }
-  return W('smm','Retainer — Select Chassis',
-    '<div class="slbl" style="margin-bottom:5px">Retainer Type</div>'+
-    '<div style="display:flex;gap:5px;margin-bottom:12px">'+
-    cCard('smm','Social Media Management','Management, scheduling & Meta ads')+
-    cCard('content','Content Creation','Photography, video & content')+
-    cCard('hybrid','Hybrid','Management + Content combined')+
-    '</div>'+
-    // SMM subpanel
-    '<div id="smm-subpanel" style="display:'+(ch==='smm'||ch==='hybrid'?'block':'none')+'">'+
-    '<div class="slbl" style="margin-bottom:5px">SMM Package</div>'+
-    Object.entries(R.smmTiers||{}).map(function(e){return tCard(e[0],e[1]);}).join('')+
-    '<div class="slbl" style="margin-bottom:5px;margin-top:8px">Add-ons</div>'+
-    '<div class="agrid">'+
-    '<div class="ac" id="ac-linkedin" data-id="linkedin" onclick="togAddon(this.dataset.id)"><div class="ac-h"><div class="ac-name">LinkedIn</div><div class="ac-tag">+$500/mo</div></div><div class="ac-desc">4 posts/month</div></div>'+
-    '<div class="ac" id="ac-tiktok" data-id="tiktok" onclick="togAddon(this.dataset.id)"><div class="ac-h"><div class="ac-name">TikTok</div><div class="ac-tag">+$1,000/mo</div></div><div class="ac-desc">4 posts/month</div></div>'+
-    '<div class="ac" id="ac-mailchimp" data-id="mailchimp" onclick="togAddon(this.dataset.id)"><div class="ac-h"><div class="ac-name">Email</div><div class="ac-tag">+$1,000/mo</div></div><div class="ac-desc">Up to 4 blasts/month</div></div>'+
-    '<div class="ac" id="ac-community" data-id="community" onclick="togAddon(this.dataset.id)"><div class="ac-h"><div class="ac-name">Community</div><div class="ac-tag">+$500/mo</div></div><div class="ac-desc">Active engagement</div></div>'+
-    '</div></div>'+
-    // Content subpanel
-    '<div id="cc-subpanel" style="display:'+(ch==='content'||ch==='hybrid'?'block':'none')+';margin-top:'+(ch==='hybrid'?'12':'0')+'px">'+
-    '<div class="slbl" style="margin-bottom:5px">Content Creation Tier</div>'+
-    Object.entries(R.contentTiers||{}).map(function(e){return ccCard(e[0],e[1]);}).join('')+
-    ccCard('custom',{name:'Custom',total:null,shootsPerYear:null,lofiHrs:null},'')+
-    '<div id="cc-custom-panel" style="display:'+(ct==='custom'?'block':'none')+';background:var(--off);border-radius:5px;padding:10px;margin-top:4px">'+
-    '<div class="dr c2">'+
-    '<div class="fgroup"><label class="fl">Shoots/year</label><input class="fi" type="number" id="cc-shoots" min="0" value="'+(S.contentShoots||4)+'" onchange="S.contentShoots=parseInt(this.value)||0;cSMM()"/></div>'+
-    '<div class="fgroup"><label class="fl">Lo-fi hrs/month</label><input class="fi" type="number" id="cc-lofi" min="0" value="'+(S.contentLofi||4)+'" onchange="S.contentLofi=parseInt(this.value)||0;cSMM()"/></div>'+
-    '</div>'+
-    '<div class="fn">$6,500 shoot value · 20% lock-in discount · First 4hrs lo-fi @ $200/hr, additional @ $150/hr</div>'+
-    '</div></div>'+
-    (S.brands&&S.brands.filter(function(b){return b.name;}).length>1?
-      '<div class="fn w" style="margin-top:8px">⚠ '+S.brands.length+' brands configured in Step 2 — monthly total reflects all brands combined.</div>':'')+
-    '<div style="margin-top:10px"><div class="slbl" style="margin-bottom:5px">Agreement Duration</div>'+
-    '<div class="dbtns">'+
-    '<div class="dbtn on" id="dur-12" onclick="selDur(12)">12 Months</div>'+
-    '<div class="dbtn" id="dur-18" onclick="selDur(18)">18 Months</div>'+
-    '<div class="dbtn" id="dur-24" onclick="selDur(24)">24 Months</div>'+
-    '</div></div>'+
-    '<div class="pchip" style="margin-top:8px"><span class="pcl">Monthly Total</span><span class="pca" id="smm-mo">BBD $3,500.00</span></div>'
+  return W('smm','Retainer Packages & Pricing',
+    '<div id="brand-tiers-list"></div>'+
+    '<div class="pchip" style="margin-top:8px"><span class="pcl">Monthly Total</span><span class="pca" id="smm-mo">BBD $3,500.00</span></div>'+
+    '<div class="fn" style="margin-top:6px">Add-on services are unlocked by the Elite Pro package or a Custom content package.</div>'
   );
 }
 
 function togAddon(id){if(id&&typeof id==='object')id=id.dataset?id.dataset.id:id;const c=document.getElementById('ac-'+id);if(!c)return;if(S.addons.has(id)){S.addons.delete(id);c.classList.remove('sel');}else{S.addons.add(id);c.classList.add('sel');}cSMM();}
 function cSMM(){upChip('smm-mo',cRetainerTotal());}
+// Single-brand package type change — keeps S.chassis and brand[0] in sync
 function selChassis(c){
   S.chassis=c;
-  ['smm','content','hybrid'].forEach(function(id){const el=document.getElementById('chassis-'+id);if(el)el.style.border='2px solid '+(id===c?'var(--cyan)':'var(--bdr)');});
-  const sp=document.getElementById('smm-subpanel'),cp=document.getElementById('cc-subpanel');
-  if(sp)sp.style.display=(c==='smm'||c==='hybrid')?'block':'none';
-  if(cp)cp.style.display=(c==='content'||c==='hybrid')?'block':'none';
-  cSMM();
-}
-function selSmmTier(key){
-  S.smmTier=key;
-  Object.keys(R.smmTiers||{}).forEach(function(k){const el=document.getElementById('smm-tier-'+k);if(el)el.style.border='2px solid '+(k===key?'var(--cyan)':'var(--bdr)');});
-  cSMM();
-}
-function selContentTier(key){
-  S.contentTier=key;
-  ['tier1','tier2','tier3','custom'].forEach(function(k){const el=document.getElementById('ct-'+k);if(el)el.style.border='2px solid '+(k===key?'var(--cyan)':'var(--bdr)');});
-  const cp=document.getElementById('cc-custom-panel');if(cp)cp.style.display=key==='custom'?'block':'none';
+  ensureBrands();
+  S.brands[0].chassis=c;
+  if(!brandUnlocksAddons(S.brands[0]))S.brands[0].addons=[];
+  const c2=document.getElementById('svcsContainer');
+  if(c2&&S.type==='retainer')renderBrandPackages(c2);
   cSMM();
 }
 function shootMo(n){const c=(4*300)+(4*350)+(30*30)+(4*1000);return Math.round(c*n/12);}
 function selShoots(n){S.shoots=n;[0,1,2].forEach(i=>{const b=document.getElementById('sb-'+i);if(b)b.className='dbtn'+(i===n?' on':'');});cSMM();}
-function selDur(m){S.dur=m;S.retDur=m;[12,18,24].forEach(d=>{const b=document.getElementById('dur-'+d);if(b)b.className='dbtn'+(d===m?' on':'');});}
+function selDur(m){S.dur=m;S.retDur=m;[6,12].forEach(d=>{const b=document.getElementById('dur-'+d);if(b)b.className='dbtn'+(d===m?' on':'');});}
 
 function digitalPanel(){return W('digital','Digital Campaign Development',`
   <div class="dr c2">
@@ -1472,26 +1535,38 @@ function buildTL(){
     </div>`;
   } else {
     document.getElementById('tlTitle').textContent='Retainer Schedule';
-    document.getElementById('tlDesc').textContent='Retainers run a minimum of 12 months. Select a start date.';
+    document.getElementById('tlDesc').textContent='Select a start date and duration. The agreement end date is calculated automatically.';
     c.innerHTML=`<div class="fg">
-      <div class="fgroup"><label class="fl">Retainer Start Date</label><input class="fi" type="date" id="retStart"/></div>
-      <div class="fgroup"><label class="fl">Onboarding Period</label>
-        <select class="fsel" id="onbWks"><option value="2">2 weeks onboarding</option><option value="4">4 weeks onboarding</option></select></div>
-      <div class="fgroup full"><label class="fl">Duration</label>
+      <div class="fgroup"><label class="fl">Retainer Start Date <span class="r">*</span></label><input class="fi" type="date" id="retStart" onchange="calcRetainerEndDate()"/></div>
+      <div class="fgroup full"><label class="fl">Duration <span class="r">*</span></label>
         <div class="dbtns" style="margin-top:4px">
+          <div class="dbtn" id="rdur-6" onclick="selRetDur(6)">6 Months</div>
           <div class="dbtn on" id="rdur-12" onclick="selRetDur(12)">12 Months</div>
-          <div class="dbtn" id="rdur-18" onclick="selRetDur(18)">18 Months</div>
-          <div class="dbtn" id="rdur-24" onclick="selRetDur(24)">24 Months</div>
         </div>
-        <span class="fhint" style="margin-top:4px;display:block">Anything under 12 months is classified as a project.</span></div>
+        <span class="fhint" style="margin-top:4px;display:block">12 months is the standard retainer term. A 6-month term may be selected with prior approval.</span></div>
+      <div class="fgroup"><label class="fl">Agreement End Date</label><input class="fi" type="date" id="agreeEnd" readonly style="background:var(--off)" placeholder="Auto-calculated from start date + duration"/></div>
       <div class="fgroup full"><label class="fl">Notes (optional)</label><textarea class="fta" id="tlNotes" placeholder="Scheduling notes or conditions"></textarea></div>
     </div>`;
+    selRetDur(S.retDur||12);
+    calcRetainerEndDate();
   }
 }
 
 let retDur=12;
-function selRetDur(m){retDur=m;S.retDur=m;[12,18,24].forEach(d=>{const b=document.getElementById('rdur-'+d);if(b)b.className='dbtn'+(d===m?' on':'');});}
+function selRetDur(m){retDur=m;S.retDur=m;[6,12].forEach(d=>{const b=document.getElementById('rdur-'+d);if(b)b.className='dbtn'+(d===m?' on':'');});calcRetainerEndDate();}
 
+function calcRetainerEndDate(){
+  const startVal=g('retStart');
+  const endEl=document.getElementById('agreeEnd');
+  if(!startVal||!endEl)return;
+  const start=new Date(startVal);
+  const months=S.retDur||12;
+  // End date = start + duration months, minus 1 day
+  const end=new Date(start);
+  end.setMonth(end.getMonth()+months);
+  end.setDate(end.getDate()-1);
+  endEl.value=end.toISOString().split('T')[0];
+}
 function enforceTL(){
   const preS=g('preStart'),preE=g('preEnd');
   const shS=g('shootStart'),shE=g('shootEnd');
@@ -1502,6 +1577,20 @@ function enforceTL(){
   if(e3)e3.style.display=(shE&&poS&&poS<g('shootEnd'))?'block':'none';
   if(preE&&shS&&shS<preE){const el=document.getElementById('shootStart');if(el)el.value=preE;}
   if(g('shootEnd')&&poS&&poS<g('shootEnd')){const el=document.getElementById('postStart');if(el)el.value=g('shootEnd');}
+}
+function applyRetainerAgreementUi(){
+  const isR=S.type==='retainer';
+  const sw=document.getElementById('agreeStartWrap');
+  const ew=document.getElementById('agreeEndWrap');
+  const note=document.getElementById('retainerAgreeNote');
+  const payStrEl=document.getElementById('payStr');
+  if(sw)sw.style.display=isR?'none':'';
+  if(ew)ew.style.display=isR?'none':'';
+  if(note)note.style.display=isR?'block':'none';
+  if(payStrEl){
+    const grp=payStrEl.closest('.fgroup');
+    if(grp)grp.style.display=isR?'none':'';
+  }
 }
 function enforceAgree(){
   const s=g('agreeStart'),e=g('agreeEnd');
@@ -1584,17 +1673,46 @@ function getItems(){
   if(sv.has('print')){const cost=pf('print-cost');const ptotal=cost+(cost*0.15);items.push({id:'print',label:'Print Facilitation',svcDesc:DESCS.print,detail:g('print-desc')||'',delSummary:(g('print-desc')||'Print facilitation')+' — supplier BBD $'+cost.toLocaleString('en',{minimumFractionDigits:2})+' + 15% markup',delQty:1,delUnit:'Project',amount:ptotal,auto:true});}
 
   if(sv.has('smm')&&t==='retainer'){
-    let mo=R.smm;
-    if(S.addons.has('linkedin'))mo+=R.linkedin;
-    if(S.addons.has('tiktok'))mo+=R.tiktok;
-    if(S.addons.has('mailchimp'))mo+=R.mailchimp;
-    if(S.addons.has('community'))mo+=R.community;
-    if(S.shoots>0)mo+=shootMo(S.shoots);
-    const addList=[...S.addons].map(a=>({linkedin:'LinkedIn',tiktok:'TikTok',mailchimp:'Email/Mailchimp',community:'Community Mgmt'})[a]).filter(Boolean);
-    const platList=['Meta (Instagram & Facebook)',...(S.addons.has('linkedin')?['LinkedIn']:[]),...(S.addons.has('tiktok')?['TikTok']:[])].join(', ');
-    const delSum=`Social media management across ${platList}. 12 posts/month, weekly stories, content calendar, Meta Ads${S.addons.has('mailchimp')?', up to 4 email blasts/month':''}${S.addons.has('community')?', community management':''}. Initial shoot + end of month analytics report${S.shoots>0?`. ${S.shoots} additional shoot(s) per year`:''}`;
-    items.push({id:'smm',label:'Social Media Management',svcDesc:DESCS.smm,detail:`BBD $${mo.toLocaleString()}/month${addList.length?' · '+addList.join(', '):''}`,delSummary:delSum,delQty:S.retDur||12,delUnit:'Months',amount:mo,auto:true,isRetainerMo:true,moAmt:mo,months:S.retDur||12});
+    ensureBrands();
+    const months=S.retDur||12;
+    const named=S.brands.filter(function(b){return b.name;});
+    const addonMap={linkedin:'LinkedIn Management',tiktok:'TikTok Management',mailchimp:'Email / Mailchimp',community:'Community Management'};
+    S.brands.forEach(function(b,i){
+      const mo=calcBrandMonthly(b);
+      const label=named.length>1?(b.name||('Brand '+(i+1))):'Retainer Services';
+      let parts=[];
+      if(b.chassis==='smm'||b.chassis==='hybrid'){
+        const t2=(R.smmTiers&&R.smmTiers[b.smmTier])||{name:'Elite',desc:''};
+        parts.push(t2.name+' \u2014 '+(t2.desc||''));
+      }
+      if(b.chassis==='content'||b.chassis==='hybrid'){
+        if(b.contentTier==='custom'){
+          parts.push('Custom Content Production \u2014 '+(b.contentShoots||0)+' shoots/year, '+(b.contentLofi||0)+'hrs lo-fi content capture/month');
+        } else {
+          const ct=(R.contentTiers&&R.contentTiers[b.contentTier])||{name:'Standard',shootsPerYear:4,lofiHrs:4};
+          parts.push(ct.name+' \u2014 '+ct.shootsPerYear+' shoots/year, '+ct.lofiHrs+'hrs lo-fi content capture/month');
+        }
+      }
+      const addonNames=b.addons.map(function(a){return addonMap[a];}).filter(Boolean);
+      if(addonNames.length)parts.push('Add-ons: '+addonNames.join(', '));
+      const delSum=parts.join('. ');
+      items.push({
+        id:named.length>1?('smm-brand-'+b.id):'smm',
+        label:label,
+        svcDesc:DESCS.smm,
+        detail:'BBD $'+mo.toLocaleString()+'/month',
+        delSummary:delSum,
+        delQty:months,
+        delUnit:'Months',
+        amount:mo,
+        auto:true,
+        isRetainerMo:true,
+        moAmt:mo,
+        months:months
+      });
+    });
   }
+
 
   if(sv.has('campaign')){const fee=getMF('campaign');items.push({id:'campaign',label:'Campaign Strategy & Execution',svcDesc:DESCS.campaign,detail:g('campaign-desc')||'',delSummary:g('campaign-desc')||'Campaign strategy, planning, and execution deliverables',delQty:1,delUnit:'Campaign',amount:fee,auto:false,manual:true});}
 
@@ -1668,8 +1786,8 @@ function buildFee(){
     const moVat=mo*VAT;const moTotal=mo+moVat;
     const months=S.retDur||12;
     html=`<div style="background:var(--navy);color:#fff;border-radius:6px;padding:11px;margin-bottom:9px;display:flex;justify-content:space-between;align-items:center">
-      <div><div style="font-size:9.5px;opacity:.4;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px">Monthly Fee (incl. VAT)</div><div style="font-family:'DM Mono',monospace;font-size:19px;font-weight:700;color:var(--cyan)">BBD $${moTotal.toLocaleString('en',{minimumFractionDigits:2})}</div></div>
-      <div style="text-align:right"><div style="font-size:9.5px;opacity:.35;margin-bottom:1px">× ${months} months</div><div style="font-family:'DM Mono',monospace;font-size:13px;color:rgba(255,255,255,.55)">BBD $${(moTotal*months).toLocaleString('en',{minimumFractionDigits:2})} total</div></div>
+      <div><div style="font-size:9.5px;opacity:.4;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px">Monthly Retainer Fee (incl. VAT)</div><div style="font-family:'DM Mono',monospace;font-size:19px;font-weight:700;color:var(--cyan)">BBD $${moTotal.toLocaleString('en',{minimumFractionDigits:2})}</div></div>
+      <div style="text-align:right"><div style="font-size:9.5px;opacity:.35">${months}-month term</div></div>
     </div>`;
   }
 
@@ -1713,39 +1831,66 @@ function buildFee(){
 
   html+=`<div class="pr vat"><div class="pr-l">VAT (17.5%)</div><div class="pr-a">BBD $${vat.toLocaleString('en',{minimumFractionDigits:2})}</div></div>`;
   html+=`<div class="pr tot"><div class="pr-l">${isR?'Monthly Total':'Total Project Fee'}</div><div class="pr-a">BBD $${tot.toLocaleString('en',{minimumFractionDigits:2})}</div></div></div>`;
-  html+=`<div class="depbox"><div><div class="dep-l">${depLbl}</div><div class="dep-s">${isR?'First month payment due upon signing':'Balance of BBD $'+bal.toLocaleString('en',{minimumFractionDigits:2})+' due upon delivery'}</div></div><div class="dep-a">BBD $${dep.toLocaleString('en',{minimumFractionDigits:2})}</div></div>`;
+  if(isR){
+    html+=`<div class="depbox"><div><div class="dep-l">Monthly Invoice</div><div class="dep-s">Payment is due by the 3rd of each month for services rendered in that month. Invoices are issued in advance upon commencement of each billing cycle.</div></div><div class="dep-a">BBD $${tot.toLocaleString('en',{minimumFractionDigits:2})}/mo</div></div>`;
+  } else {
+    html+=`<div class="depbox"><div><div class="dep-l">${depLbl}</div><div class="dep-s">Balance of BBD $${bal.toLocaleString('en',{minimumFractionDigits:2})+' due upon delivery'}</div></div><div class="dep-a">BBD $${dep.toLocaleString('en',{minimumFractionDigits:2})}</div></div>`;
+  }
 
-  // Discount + Rush fee controls
+  // Discount + Rush controls — retainer has no rush fee, simplified discount
   const rushPct=S.rush/100;
   const showDiscount=S.showDiscount;
   const showRush=S.showRush;
-  html+=`<div style="background:var(--off);border:1px solid var(--bdr);border-radius:5px;padding:10px 12px;margin-top:8px">
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:${showDiscount||showRush?'10px':'0'}">
-      <div class="dbtn${showDiscount?' on':''}" onclick="S.showDiscount=!S.showDiscount;buildFee()" style="font-size:11px;padding:4px 12px">
-        ${showDiscount?'▾':'+'}  Apply Discount
+  if(isR){
+    html+=`<div style="background:var(--off);border:1px solid var(--bdr);border-radius:5px;padding:10px 12px;margin-top:8px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:${showDiscount?'10px':'0'}">
+        <div class="dbtn${showDiscount?' on':''}" onclick="S.showDiscount=!S.showDiscount;buildFee()" style="font-size:11px;padding:4px 12px">
+          ${showDiscount?'▾':'+'}  Apply Discount
+        </div>
       </div>
-      <div class="dbtn${showRush?' on':''}" onclick="S.showRush=!S.showRush;buildFee()" style="font-size:11px;padding:4px 12px">
-        ${showRush?'▾':'+'}  Add Rush Fee
+      <input type="hidden" id="showDiscount" value="${showDiscount?'1':'0'}"/>
+      <input type="hidden" id="showRush" value="0"/>
+      <input type="hidden" id="rushPct" value="0"/>
+      ${showDiscount?`<div>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+          <span style="font-size:11px;font-weight:600;color:var(--navy)">Discount</span>
+          <div style="display:flex;gap:5px;flex-wrap:wrap">
+            ${[0,5,10,15,20,25].map(p=>`<div class="dbtn${Math.round(discPct*100)===p?' on':''}" onclick="S.discount=${p};buildFee()" style="padding:2px 9px;font-size:10.5px">${p===0?'None':p+'%'}</div>`).join('')}
+          </div>
+          <input class="fi" type="number" id="discountPct" value="${Math.round(discPct*100)||0}" min="0" max="100" placeholder="Custom %" style="width:70px;text-align:center" onchange="S.discount=parseFloat(this.value)||0;buildFee()"/>
+        </div>
+        <div style="font-size:10px;color:var(--warn);background:#fff8e6;border-radius:4px;padding:6px 8px">⚠ No unauthorised discount is to be applied. Please consult the operations team before applying a discount.</div>
+      </div>`:'<input type="hidden" id="discountPct" value="0"/>'}
+    </div>`;
+  } else {
+    html+=`<div style="background:var(--off);border:1px solid var(--bdr);border-radius:5px;padding:10px 12px;margin-top:8px">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:${showDiscount||showRush?'10px':'0'}">
+        <div class="dbtn${showDiscount?' on':''}" onclick="S.showDiscount=!S.showDiscount;buildFee()" style="font-size:11px;padding:4px 12px">
+          ${showDiscount?'▾':'+'}  Apply Discount
+        </div>
+        <div class="dbtn${showRush?' on':''}" onclick="S.showRush=!S.showRush;buildFee()" style="font-size:11px;padding:4px 12px">
+          ${showRush?'▾':'+'}  Add Rush Fee
+        </div>
       </div>
-    </div>
-    <input type="hidden" id="showDiscount" value="${showDiscount?'1':'0'}"/>
-    <input type="hidden" id="showRush" value="${showRush?'1':'0'}"/>
-    ${showDiscount?`<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
-      <span style="font-size:11px;font-weight:600;color:var(--navy)">Discount</span>
-      <div style="display:flex;gap:5px;flex-wrap:wrap">
-        ${[0,5,10,15,20,25].map(p=>`<div class="dbtn${Math.round(discPct*100)===p?' on':''}" onclick="S.discount=${p};buildFee()" style="padding:2px 9px;font-size:10.5px">${p===0?'None':p+'%'}</div>`).join('')}
-      </div>
-      <input class="fi" type="number" id="discountPct" value="${Math.round(discPct*100)||0}" min="0" max="100" placeholder="Custom %" style="width:70px;text-align:center" onchange="S.discount=parseFloat(this.value)||0;buildFee()"/>
-    </div>`:'<input type="hidden" id="discountPct" value="0"/>'}
-    ${showRush?`<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-      <span style="font-size:11px;font-weight:600;color:var(--warn)">Rush Fee</span>
-      <div style="display:flex;gap:5px;flex-wrap:wrap">
-        ${[10,15,20,25,30].map(p=>`<div class="dbtn${Math.round(rushPct*100)===p?' on':''}" onclick="S.rush=${p};buildFee()" style="padding:2px 9px;font-size:10.5px">${p}%</div>`).join('')}
-      </div>
-      <input class="fi" type="number" id="rushPct" value="${Math.round(rushPct*100)||0}" min="0" max="100" placeholder="Custom %" style="width:70px;text-align:center" onchange="S.rush=parseFloat(this.value)||0;buildFee()"/>
-      <span style="font-size:10px;color:var(--mut)">Applied to subtotal</span>
-    </div>`:'<input type="hidden" id="rushPct" value="0"/>'}
-  </div>`;
+      <input type="hidden" id="showDiscount" value="${showDiscount?'1':'0'}"/>
+      <input type="hidden" id="showRush" value="${showRush?'1':'0'}"/>
+      ${showDiscount?`<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
+        <span style="font-size:11px;font-weight:600;color:var(--navy)">Discount</span>
+        <div style="display:flex;gap:5px;flex-wrap:wrap">
+          ${[0,5,10,15,20,25].map(p=>`<div class="dbtn${Math.round(discPct*100)===p?' on':''}" onclick="S.discount=${p};buildFee()" style="padding:2px 9px;font-size:10.5px">${p===0?'None':p+'%'}</div>`).join('')}
+        </div>
+        <input class="fi" type="number" id="discountPct" value="${Math.round(discPct*100)||0}" min="0" max="100" placeholder="Custom %" style="width:70px;text-align:center" onchange="S.discount=parseFloat(this.value)||0;buildFee()"/>
+      </div>`:'<input type="hidden" id="discountPct" value="0"/>'}
+      ${showRush?`<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span style="font-size:11px;font-weight:600;color:var(--warn)">Rush Fee</span>
+        <div style="display:flex;gap:5px;flex-wrap:wrap">
+          ${[10,15,20,25,30].map(p=>`<div class="dbtn${Math.round(rushPct*100)===p?' on':''}" onclick="S.rush=${p};buildFee()" style="padding:2px 9px;font-size:10.5px">${p}%</div>`).join('')}
+        </div>
+        <input class="fi" type="number" id="rushPct" value="${Math.round(rushPct*100)||0}" min="0" max="100" placeholder="Custom %" style="width:70px;text-align:center" onchange="S.rush=parseFloat(this.value)||0;buildFee()"/>
+        <span style="font-size:10px;color:var(--mut)">Applied to subtotal</span>
+      </div>`:'<input type="hidden" id="rushPct" value="0"/>'}
+    </div>`;
+  }
 
   // Signing director
   html+=`<div style="background:var(--off);border:1px solid var(--bdr);border-radius:5px;padding:10px 12px;margin-top:8px">
@@ -1758,6 +1903,9 @@ function buildFee(){
   </div>`;
 
   document.getElementById('feeSummary').innerHTML=html;
+  // Hide payment structure dropdown for retainer — fixed monthly billing
+  const payStrWrap=document.getElementById('payStr');
+  if(payStrWrap)payStrWrap.closest('.fgroup').style.display=isR?'none':'';
 }
 
 // ═══ FULL REVIEW ══════════════════════════════════
