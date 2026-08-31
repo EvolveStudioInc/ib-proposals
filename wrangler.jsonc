@@ -3,12 +3,17 @@
   "name": "ib-proposals",
   "compatibility_date": "2026-06-30",
   "main": "worker.js",
+
   "observability": {
     "enabled": true
   },
+
   "assets": {
-    "directory": "."
+    "directory": ".",
+    "binding": "ASSETS",
+    "run_worker_first": true
   },
+
   "compatibility_flags": [
     "nodejs_compat"
   ]
