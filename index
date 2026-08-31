@@ -1154,7 +1154,7 @@ function getBrandAddonsHtml(b){
   const addonsMap={linkedin:'LinkedIn +$500',tiktok:'TikTok +$1k',mailchimp:'Email +$1k',community:'Community +$500'};
   const btns=Object.entries(addonsMap).map(function(e){
     const on=b.addons.indexOf(e[0])>-1;
-    return '<div class="dbtn'+(on?' on':'')+'" style="font-size:10px;padding:2px 8px" data-bid="'+b.id+'" data-addon="'+e[0]+'" onclick="togBrandAddon(this)">'+e[1]+'</div>';
+    return '<div class="dbtn'+(on?' on':'')+'" style="font-size:10px;padding:2px 8px" data-bid="'+b.id+'" data-addon="'+e[0]+'" onclick="togBrandRetainerAddon(this)">'+e[1]+'</div>';
   }).join('');
   return '<div class="fgroup"><label class="fl">Add-ons</label><div class="dbtns" style="flex-wrap:wrap;gap:5px">'+btns+'</div></div>';
 }
@@ -1193,7 +1193,7 @@ function updateBrand(id,key,val){
   if(b){b[key]=val;renderBrands();}
 }
 
-function togBrandAddon(el){
+function togBrandRetainerAddon(el){
   const id=parseInt(el.dataset.bid),addon=el.dataset.addon;
   const b=S.brands.find(function(b){return b.id===id;});
   if(!b)return;
@@ -1565,7 +1565,6 @@ function enforceAgree(){
 }
 
 // ═══ LINE ITEMS ════════════════════════════════════
-function getMF(id){return parseFloat(manFees[id]||g(id+'-fee')||0);}
 
 function getItems(){
   const items=[],sv=S.svcs,t=S.type;
