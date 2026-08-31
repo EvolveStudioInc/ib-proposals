@@ -29,17 +29,24 @@ export default {
       }
     }
 
-    // Inject the email as a global JS variable into the HTML
+    // Read and modify the HTML body
     const originalText = await response.text();
     const injected = originalText.replace(
       '<head>',
       `<head><script>window.CF_USER_EMAIL="${userEmail}";</script>`
     );
 
+    // Build new mutable headers — cannot reuse original headers object
+    // after consuming the body. Also remove Content-Length so the browser
+    // recalculates it for the modified (longer) response body.
+    const newHeaders = new Headers(response.headers);
+    newHeaders.delete('Content-Length');
+    newHeaders.delete('content-length');
+
     return new Response(injected, {
       status: response.status,
       statusText: response.statusText,
-      headers: response.headers,
+      headers: newHeaders,
     });
   }
 };
