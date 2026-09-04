@@ -1201,10 +1201,10 @@ function updateBrandPackage(id,key,val){
   }
 }
 function brandUnlocksAddons(b){
-  // Add-on services are unlocked specifically by the Elite Pro SMM package.
-  // Custom content tiers already expose their own configurable fields
-  // (shoots/year, lo-fi hrs) directly in brandCcTierHtml — no separate addons needed there.
-  return (b.chassis==='smm'||b.chassis==='hybrid')&&b.smmTier==='elitePro';
+  // Add-on services unlocked by Elite Pro SMM package
+  const isElitePro=(b.smmTier==='elitePro')||
+    (!!(R.smmTiers&&R.smmTiers[b.smmTier]&&R.smmTiers[b.smmTier].unlocksAddons));
+  return (b.chassis==='smm'||b.chassis==='hybrid')&&isElitePro;
 }
 
 // STEP 5 — tier selection + add-ons per brand
@@ -1749,113 +1749,129 @@ function getItems(){
     ensureBrands();
     const months=S.retDur||12;
 
+    // Count how many brands use each tier key (for qty display)
+    const tierCounts={};
+    S.brands.forEach(function(b){
+      const tk=b.smmTier||'elite';
+      tierCounts[tk]=(tierCounts[tk]||0)+1;
+    });
+
+    // Track which tier keys have already been pushed as a deliverable row
+    const delTierSeen={};
+
     S.brands.forEach(function(b,i){
       const tierKey=b.smmTier||'elite';
       const tier=(R.smmTiers&&R.smmTiers[tierKey])||{name:'Elite',price:3500};
       const pName=tier.name+' Package';
       const hasAddons=brandUnlocksAddons(b);
 
-      // ── FEE: one consolidated line per brand (package + all addons summed) ──
+      // ── FEE: one consolidated line per brand ──
       const brandTotal=calcBrandMonthly(b);
       items.push({
         id:'smm-'+b.id+'-fee',
         label:pName,
         svcDesc:DESCS.smm,
         detail:'BBD $'+brandTotal.toLocaleString()+'/month',
-        delSummary:null, // fee-only item — excluded from deliverables rows
-        delQty:months, delUnit:'Months',
+        delSummary:null,
         amount:brandTotal, auto:true,
-        isRetainerMo:true, moAmt:brandTotal, months:months,
-        isFeeOnly:true  // flag: included in fee table but not deliverables
+        isRetainerMo:true, moAmt:brandTotal,
+        isFeeOnly:true
       });
 
-      // ── DELIVERABLES: package default row ──
+      // ── DELIVERABLES: package row (once per tier, with count as qty) ──
       if(b.chassis==='smm'||b.chassis==='hybrid'){
-        const pDesc=getPackageDeliverables(tierKey);
-        items.push({
-          id:'smm-'+b.id+'-pkg-del',
-          label:pName,
-          svcDesc:'', detail:'',
-          delSummary:pDesc,
-          delQty:months, delUnit:'Months',
-          amount:0, auto:true,
-          isRetainerMo:false, moAmt:0, months:months,
-          isDelOnly:true  // flag: included in deliverables but not fee table
-        });
+        if(!delTierSeen[tierKey]){
+          delTierSeen[tierKey]=true;
+          const count=tierCounts[tierKey]||1;
+          const qtyLabel=count===1?'1 Package':count+' Packages';
+          const pDesc=getPackageDeliverables(tierKey);
+          items.push({
+            id:'ret-del-'+tierKey,
+            label:pName,
+            svcDesc:'', detail:'',
+            delSummary:pDesc,
+            delQty:qtyLabel, delUnit:'',
+            amount:0, auto:true,
+            isRetainerMo:false, moAmt:0,
+            isDelOnly:true
+          });
+        }
 
-        // Add-on deliverable rows (one per addon)
+        // Add-on deliverable rows (one per addon per brand — addons may differ)
         if(hasAddons){
           b.addons.forEach(function(a){
             if(!RETAINER_ADDON_LABEL[a])return;
             items.push({
-              id:'smm-'+b.id+'-'+a+'-del',
+              id:'ret-del-'+b.id+'-'+a,
               label:RETAINER_ADDON_LABEL[a],
               svcDesc:'', detail:'',
               delSummary:RETAINER_ADDON_DESC[a],
-              delQty:months, delUnit:'Months',
+              delQty:'1 Service', delUnit:'',
               amount:0, auto:true,
-              isRetainerMo:false, moAmt:0, months:months,
+              isRetainerMo:false, moAmt:0,
               isDelOnly:true
             });
           });
           if(b.extAdPlatformsOn){
             items.push({
-              id:'smm-'+b.id+'-extad-del',
+              id:'ret-del-'+b.id+'-extad',
               label:'Extended Ad Platforms',
               svcDesc:'', detail:'',
               delSummary:'Extended advertising management across Google, retail/ad screens, and streaming platforms.',
-              delQty:months, delUnit:'Months',
+              delQty:'1 Service', delUnit:'',
               amount:0, auto:true,
-              isRetainerMo:false, moAmt:0, months:months,
+              isRetainerMo:false, moAmt:0,
               isDelOnly:true
             });
           }
           if(b.extraShoots){
             items.push({
-              id:'smm-'+b.id+'-shoots-del',
+              id:'ret-del-'+b.id+'-shoots',
               label:'Additional Shoots (+'+b.extraShoots+'/yr)',
               svcDesc:'', detail:'',
               delSummary:b.extraShoots+' additional production shoot(s) per year, inclusive of camera operators, coordination, and high-resolution media.',
-              delQty:months, delUnit:'Months',
+              delQty:b.extraShoots+' Shoot'+(b.extraShoots>1?'s':''), delUnit:'',
               amount:0, auto:true,
-              isRetainerMo:false, moAmt:0, months:months,
+              isRetainerMo:false, moAmt:0,
               isDelOnly:true
             });
           }
           if(b.extraLofiHours){
             items.push({
-              id:'smm-'+b.id+'-lofi-del',
+              id:'ret-del-'+b.id+'-lofi',
               label:'Additional Content Hours (+'+b.extraLofiHours+'hrs/mo)',
               svcDesc:'', detail:'',
               delSummary:b.extraLofiHours+' additional hour(s) of lo-fi content capture per month.',
-              delQty:months, delUnit:'Months',
+              delQty:b.extraLofiHours+'hrs/mo', delUnit:'',
               amount:0, auto:true,
-              isRetainerMo:false, moAmt:0, months:months,
+              isRetainerMo:false, moAmt:0,
               isDelOnly:true
             });
           }
         }
       }
 
-      // Content package deliverable row
+      // Content package deliverable row (once per content tier)
       if(b.chassis==='content'||b.chassis==='hybrid'){
-        let cName,cDesc;
+        let cName,cDesc,cQty;
         if(b.contentTier==='custom'){
           cName='Custom Content Package';
           cDesc=(b.contentShoots||0)+' shoots/year, '+(b.contentLofi||0)+'hrs lo-fi content capture/month.';
+          cQty='1 Package';
         } else {
           const ct=(R.contentTiers&&R.contentTiers[b.contentTier])||{name:'Standard',shootsPerYear:4,lofiHrs:4};
           cName=ct.name+' Content Package';
           cDesc=ct.shootsPerYear+' shoots/year, '+ct.lofiHrs+'hrs lo-fi content capture/month.';
+          cQty='1 Package';
         }
         items.push({
-          id:'smm-'+b.id+'-content-del',
+          id:'ret-del-'+b.id+'-content',
           label:cName,
           svcDesc:'', detail:'',
           delSummary:cDesc,
-          delQty:months, delUnit:'Months',
+          delQty:cQty, delUnit:'',
           amount:0, auto:true,
-          isRetainerMo:false, moAmt:0, months:months,
+          isRetainerMo:false, moAmt:0,
           isDelOnly:true
         });
       }
@@ -1952,7 +1968,7 @@ function buildFee(){
   }
 
   html+=`<div class="ptbl"><div class="ptbl-h"><span>Service / Item</span><span>${isR?'BBD$ / month':'BBD$'}</span></div>`;
-  const displayItems=isR?items.filter(function(i){return i.isFeeOnly;}):items;
+  const displayItems=isR?items.filter(function(i){return i.isFeeOnly&&i.amount>0;}):items;
   displayItems.forEach(item=>{
     if(item.manual||(!item.amount&&item.amount!==0)){
       // Pre-populate from step 5 if available
